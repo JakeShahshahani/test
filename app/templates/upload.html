@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Data - VC Portfolio Management{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="/" style="color: #3498db; text-decoration: none;">&larr; Back to Dashboard</a>
+</div>
+
+<div class="card">
+    <h2>Upload Financial Data</h2>
+
+    <div id="uploadStatus" style="display: none;"></div>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Company *</label>
+            <select name="company_id" required style="width: 100%; padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 1rem;">
+                <option value="">Choose a company...</option>
+                {% for company in companies %}
+                <option value="{{ company.id }}">{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Document Type *</label>
+            <select name="document_type" required style="width: 100%; padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 1rem;">
+                <option value="">Choose document type...</option>
+                <option value="quarterly_deck">Quarterly Deck (PDF)</option>
+                <option value="financial_report">Financial Report (Excel/CSV)</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Year</label>
+                <input type="number" name="year" min="2020" max="2030" placeholder="e.g., 2024" style="width: 100%; padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Quarter</label>
+                <select name="quarter" style="width: 100%; padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                    <option value="">Select quarter...</option>
+                    <option value="1">Q1</option>
+                    <option value="2">Q2</option>
+                    <option value="3">Q3</option>
+                    <option value="4">Q4</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select File *</label>
+            <input type="file" name="file" required accept=".pdf,.xlsx,.xls,.csv" style="width: 100%; padding: 0.75rem; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 1rem;">
+            <small style="color: #7f8c8d; margin-top: 0.5rem; display: block;">
+                Accepted formats: PDF, Excel (.xlsx, .xls), CSV. Maximum file size: 16MB
+            </small>
+        </div>
+
+        <button type="submit" class="btn btn-success" style="font-size: 1rem; padding: 0.75rem 2rem;">
+            Upload File
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Upload Instructions</h2>
+
+    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Excel/CSV Format</h3>
+    <p>For Excel or CSV files containing financial metrics, use the following column headers (case-insensitive):</p>
+
+    <table style="margin-top: 1rem;">
+        <thead>
+            <tr>
+                <th>Column Name</th>
+                <th>Description</th>
+                <th>Required</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Year</code></td>
+                <td>Year (e.g., 2024)</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td><code>Quarter</code></td>
+                <td>Quarter number (1, 2, 3, or 4)</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td><code>Revenue</code></td>
+                <td>Total revenue for the quarter</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>ARR</code></td>
+                <td>Annual Recurring Revenue</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>cARR</code></td>
+                <td>Committed Annual Recurring Revenue</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>LARR</code></td>
+                <td>Linear Annual Recurring Revenue</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>Gross Margin</code></td>
+                <td>Gross margin as decimal (0.7 = 70%)</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>Burn Rate</code></td>
+                <td>Monthly burn rate</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>Cash Balance</code></td>
+                <td>Current cash balance</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>Customer Count</code></td>
+                <td>Total number of customers</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>Notes</code></td>
+                <td>Additional notes or comments</td>
+                <td>No</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Example CSV</h3>
+    <pre style="background: #ecf0f1; padding: 1rem; border-radius: 4px; overflow-x: auto;">Year,Quarter,Revenue,ARR,cARR,LARR,Gross Margin,Burn Rate,Cash Balance,Customer Count
+2024,1,1500000,6000000,7000000,6500000,0.72,200000,5000000,150
+2024,2,1800000,7200000,8000000,7600000,0.75,180000,5200000,175</pre>
+
+    <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">PDF Format</h3>
+    <p>For PDF quarterly decks, the system will attempt to automatically extract financial metrics using pattern matching. For best results:</p>
+    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+        <li>Include clear labels for metrics (e.g., "Revenue: $1.5M", "ARR: $6M")</li>
+        <li>Specify the quarter (e.g., "Q1 2024")</li>
+        <li>Use consistent formatting</li>
+    </ul>
+    <p style="margin-top: 0.5rem; color: #e67e22;">
+        <strong>Note:</strong> PDF parsing is experimental. For accurate data import, use Excel or CSV format.
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const statusDiv = document.getElementById('uploadStatus');
+
+    statusDiv.style.display = 'block';
+    statusDiv.className = 'alert';
+    statusDiv.innerHTML = 'Uploading...';
+
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            statusDiv.className = 'alert alert-success';
+            let message = `✓ File uploaded successfully!`;
+
+            if (result.metrics_parsed > 0) {
+                message += ` ${result.metrics_parsed} metric(s) were automatically parsed and saved.`;
+            }
+
+            if (result.parse_result && result.parse_result.note) {
+                message += `<br><small>${result.parse_result.note}</small>`;
+            }
+
+            statusDiv.innerHTML = message;
+
+            // Reset form after 2 seconds
+            setTimeout(() => {
+                e.target.reset();
+                statusDiv.style.display = 'none';
+            }, 3000);
+
+        } else {
+            statusDiv.className = 'alert alert-error';
+            statusDiv.innerHTML = `✗ Error: ${result.error}`;
+        }
+    } catch (error) {
+        statusDiv.className = 'alert alert-error';
+        statusDiv.innerHTML = `✗ Upload failed: ${error.message}`;
+    }
+});
+</script>
+{% endblock %}

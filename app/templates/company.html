@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.name }} - VC Portfolio Management{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="/" style="color: #3498db; text-decoration: none;">&larr; Back to Dashboard</a>
+</div>
+
+<div class="card">
+    <h2>{{ company.name }}</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div>
+            <strong>Industry:</strong> {{ company.industry or 'N/A' }}
+        </div>
+        <div>
+            <strong>Stage:</strong> {{ company.stage or 'N/A' }}
+        </div>
+        <div>
+            <strong>Investment Date:</strong> {{ company.investment_date or 'N/A' }}
+        </div>
+    </div>
+    {% if company.description %}
+    <div style="margin-top: 1rem;">
+        <strong>Description:</strong><br>
+        {{ company.description }}
+    </div>
+    {% endif %}
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <h3>Health Score</h3>
+        <div class="value" style="color:
+            {% if health.score >= 80 %}#27ae60
+            {% elif health.score >= 60 %}#3498db
+            {% elif health.score >= 40 %}#f39c12
+            {% else %}#e74c3c{% endif %};">
+            {{ health.score if health.score else 'N/A' }}
+        </div>
+        <div style="margin-top: 0.5rem;">
+            {% if health.status == 'Excellent' %}
+                <span class="badge badge-excellent">{{ health.status }}</span>
+            {% elif health.status == 'Good' %}
+                <span class="badge badge-good">{{ health.status }}</span>
+            {% elif health.status == 'Fair' %}
+                <span class="badge badge-fair">{{ health.status }}</span>
+            {% elif health.status == 'Needs Attention' %}
+                <span class="badge badge-attention">{{ health.status }}</span>
+            {% else %}
+                <span class="badge badge-critical">{{ health.status }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if metrics %}
+    <div class="stat-card">
+        <h3>Latest Revenue</h3>
+        <div class="value">${{ "%.2f"|format(metrics[0].revenue / 1000000) if metrics[0].revenue else '0' }}M</div>
+        <div style="margin-top: 0.5rem; color: #7f8c8d; font-size: 0.9rem;">{{ metrics[0].period }}</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Latest ARR</h3>
+        <div class="value">${{ "%.2f"|format(metrics[0].arr / 1000000) if metrics[0].arr else '0' }}M</div>
+        <div style="margin-top: 0.5rem; color: #7f8c8d; font-size: 0.9rem;">{{ metrics[0].period }}</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Customer Count</h3>
+        <div class="value">{{ metrics[0].customer_count if metrics[0].customer_count else 'N/A' }}</div>
+        <div style="margin-top: 0.5rem; color: #7f8c8d; font-size: 0.9rem;">{{ metrics[0].period }}</div>
+    </div>
+    {% endif %}
+</div>
+
+{% if health.factors %}
+<div class="card">
+    <h2>Health Score Factors</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Factor</th>
+                <th>Value</th>
+                <th>Points</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for factor in health.factors %}
+            <tr>
+                <td>{{ factor.factor }}</td>
+                <td>{{ factor.value }}</td>
+                <td>{{ factor.points }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Quarterly Metrics</h2>
+
+    <div style="margin-bottom: 1rem;">
+        <button class="btn btn-success" onclick="showAddMetricForm()">+ Add Metrics</button>
+        <a href="/api/companies/{{ company.id }}/export" class="btn btn-secondary">Export to Excel</a>
+    </div>
+
+    <div id="addMetricForm" style="display: none; background: #ecf0f1; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 1rem;">Add Quarterly Metrics</h3>
+        <form id="metricForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Year *</label>
+                    <input type="number" name="year" required min="2020" max="2030" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Quarter *</label>
+                    <select name="quarter" required style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                        <option value="">Select quarter</option>
+                        <option value="1">Q1</option>
+                        <option value="2">Q2</option>
+                        <option value="3">Q3</option>
+                        <option value="4">Q4</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Revenue</label>
+                    <input type="number" name="revenue" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">ARR</label>
+                    <input type="number" name="arr" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">cARR</label>
+                    <input type="number" name="carr" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">LARR</label>
+                    <input type="number" name="larr" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Gross Margin (0-1)</label>
+                    <input type="number" name="gross_margin" step="0.01" min="0" max="1" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Burn Rate</label>
+                    <input type="number" name="burn_rate" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Cash Balance</label>
+                    <input type="number" name="cash_balance" step="0.01" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Customer Count</label>
+                    <input type="number" name="customer_count" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;">
+                </div>
+            </div>
+            <div style="margin-top: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Notes</label>
+                <textarea name="notes" rows="2" style="width: 100%; padding: 0.5rem; border: 1px solid #bdc3c7; border-radius: 4px;"></textarea>
+            </div>
+            <div style="margin-top: 1rem;">
+                <button type="submit" class="btn btn-success">Add Metrics</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddMetricForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Revenue</th>
+                <th>ARR</th>
+                <th>cARR</th>
+                <th>LARR</th>
+                <th>Gross Margin</th>
+                <th>Customers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for metric in metrics %}
+            <tr>
+                <td><strong>{{ metric.period }}</strong></td>
+                <td>${{ "%.2f"|format(metric.revenue / 1000000) if metric.revenue else '-' }}M</td>
+                <td>${{ "%.2f"|format(metric.arr / 1000000) if metric.arr else '-' }}M</td>
+                <td>${{ "%.2f"|format(metric.carr / 1000000) if metric.carr else '-' }}M</td>
+                <td>${{ "%.2f"|format(metric.larr / 1000000) if metric.larr else '-' }}M</td>
+                <td>{{ "%.1f"|format(metric.gross_margin * 100) if metric.gross_margin else '-' }}%</td>
+                <td>{{ metric.customer_count or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem; color: #7f8c8d;">
+                    No metrics available. Add metrics manually or upload a file.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if documents %}
+<div class="card">
+    <h2>Uploaded Documents</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Filename</th>
+                <th>Type</th>
+                <th>Quarter</th>
+                <th>Upload Date</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documents %}
+            <tr>
+                <td>{{ doc.original_filename }}</td>
+                <td>{{ doc.document_type }}</td>
+                <td>{% if doc.quarter %}Q{{ doc.quarter }} {{ doc.year }}{% else %}N/A{% endif %}</td>
+                <td>{{ doc.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ "%.2f"|format(doc.file_size / 1024) }} KB</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddMetricForm() {
+    document.getElementById('addMetricForm').style.display = 'block';
+}
+
+function hideAddMetricForm() {
+    document.getElementById('addMetricForm').style.display = 'none';
+    document.getElementById('metricForm').reset();
+}
+
+document.getElementById('metricForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = {};
+
+    for (let [key, value] of formData) {
+        if (value !== '') {
+            // Convert numeric fields
+            if (['year', 'quarter', 'customer_count'].includes(key)) {
+                data[key] = parseInt(value);
+            } else if (['revenue', 'arr', 'carr', 'larr', 'gross_margin', 'burn_rate', 'cash_balance'].includes(key)) {
+                data[key] = parseFloat(value);
+            } else {
+                data[key] = value;
+            }
+        }
+    }
+
+    try {
+        const response = await fetch('/api/companies/{{ company.id }}/metrics', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + error.error);
+        }
+    } catch (error) {
+        alert('Error adding metrics: ' + error.message);
+    }
+});
+</script>
+{% endblock %}
