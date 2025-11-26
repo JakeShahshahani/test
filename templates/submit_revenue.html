@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Quarterly Revenue{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Submit Quarterly Revenue</h2>
+
+    {% if success %}
+    <div class="alert alert-success">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="company_id">Select Company *</label>
+            <select name="company_id" id="company_id" required>
+                <option value="">Choose a company...</option>
+                {% for company in companies %}
+                <option value="{{ company.id }}">{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="year">Year *</label>
+                <input type="number" name="year" id="year" min="2020" max="2030" value="2024" required>
+            </div>
+
+            <div class="form-group">
+                <label for="quarter">Quarter *</label>
+                <select name="quarter" id="quarter" required>
+                    <option value="">Select quarter...</option>
+                    <option value="1">Q1</option>
+                    <option value="2">Q2</option>
+                    <option value="3">Q3</option>
+                    <option value="4">Q4</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="revenue">Revenue ($) *</label>
+            <input type="number" name="revenue" id="revenue" step="0.01" min="0" placeholder="e.g., 250000" required>
+            <small style="color: #7f8c8d; display: block; margin-top: 0.5rem;">
+                Enter the total revenue for this quarter (e.g., 250000 for $250,000)
+            </small>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-success">Submit Revenue</button>
+            <a href="/dashboard/revenue-tracking" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Instructions</h2>
+    <ul style="margin-left: 2rem; line-height: 2;">
+        <li>Select the company from the dropdown</li>
+        <li>Enter the year and quarter for this revenue submission</li>
+        <li>Enter the total revenue amount in dollars</li>
+        <li>If revenue for this company/quarter already exists, it will be updated</li>
+        <li>Data will immediately appear on the Revenue Tracking Dashboard</li>
+    </ul>
+</div>
+
+{% if companies|length == 0 %}
+<div class="card" style="background: #fff3cd; border: 1px solid #ffc107;">
+    <p style="margin: 0;">
+        <strong>Note:</strong> No companies found. <a href="/admin/add-company">Add a company first</a>
+    </p>
+</div>
+{% endif %}
+{% endblock %}

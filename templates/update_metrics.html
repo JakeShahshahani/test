@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Update Metrics - {{ company.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Update Metrics: {{ company.name }}</h2>
+
+    {% if success %}
+    <div class="alert alert-success">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label for="arr">ARR ($)</label>
+                <input type="number" name="arr" id="arr" step="0.01" value="{{ metrics.arr or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="headcount">Headcount</label>
+                <input type="number" name="headcount" id="headcount" value="{{ metrics.headcount or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="gross_profit">Gross Profit ($)</label>
+                <input type="number" name="gross_profit" id="gross_profit" step="0.01" value="{{ metrics.gross_profit or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="gross_profit_percent">Gross Profit (%)</label>
+                <input type="number" name="gross_profit_percent" id="gross_profit_percent" step="0.1" min="0" max="100" value="{{ metrics.gross_profit_percent or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="sales_marketing">Sales & Marketing ($)</label>
+                <input type="number" name="sales_marketing" id="sales_marketing" step="0.01" value="{{ metrics.sales_marketing or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="research_development">Research & Development ($)</label>
+                <input type="number" name="research_development" id="research_development" step="0.01" value="{{ metrics.research_development or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="general_administrative">General & Administrative ($)</label>
+                <input type="number" name="general_administrative" id="general_administrative" step="0.01" value="{{ metrics.general_administrative or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="eop_cash">EOP Cash ($)</label>
+                <input type="number" name="eop_cash" id="eop_cash" step="0.01" value="{{ metrics.eop_cash or 0 }}">
+            </div>
+
+            <div class="form-group">
+                <label for="eop_runway">EOP Runway (months)</label>
+                <input type="number" name="eop_runway" id="eop_runway" step="0.1" value="{{ metrics.eop_runway or 0 }}">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-success">Update Metrics</button>
+            <a href="/dashboard/portfolio-metrics" class="btn">Back to Dashboard</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Metrics Definitions</h2>
+    <ul style="margin-left: 2rem; line-height: 2;">
+        <li><strong>ARR:</strong> Annual Recurring Revenue</li>
+        <li><strong>Headcount:</strong> Total number of employees</li>
+        <li><strong>Gross Profit:</strong> Revenue minus cost of goods sold</li>
+        <li><strong>Gross Profit %:</strong> (Gross Profit / Revenue) × 100</li>
+        <li><strong>Sales & Marketing:</strong> Total S&M expenses</li>
+        <li><strong>Research & Development:</strong> Total R&D expenses</li>
+        <li><strong>General & Administrative:</strong> Total G&A expenses</li>
+        <li><strong>EOP Cash:</strong> End of Period cash balance</li>
+        <li><strong>EOP Runway:</strong> Months of cash remaining at current burn rate</li>
+    </ul>
+</div>
+{% endblock %}

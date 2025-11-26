@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue Tracking Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Revenue Tracking Dashboard</h2>
+
+    {% if revenue_data %}
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th class="number">Latest Revenue</th>
+                    <th>Latest Period</th>
+                    <th>Historical Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in revenue_data %}
+                <tr>
+                    <td><strong>{{ company.company_name }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(company.latest_revenue) }}</td>
+                    <td>{{ company.latest_period }}</td>
+                    <td>
+                        {% if company.historical %}
+                        <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" onclick="showHistory('{{ company.company_name }}')">
+                            View History ({{ company.historical|length }} quarters)
+                        </button>
+                        {% else %}
+                        <span style="color: #7f8c8d;">No data</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; padding: 3rem; color: #7f8c8d;">
+        No revenue data yet. <a href="/form/submit-revenue">Submit revenue data</a>
+    </p>
+    {% endif %}
+</div>
+
+{% if revenue_data %}
+{% for company in revenue_data %}
+{% if company.historical %}
+<div class="card" id="history-{{ company.company_name.replace(' ', '-') }}" style="display: none;">
+    <h2>{{ company.company_name }} - Revenue History</h2>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">Quarter-over-Quarter Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(company.historical|length) %}
+                {% set rev = company.historical[i] %}
+                <tr>
+                    <td><strong>{{ rev.period }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(rev.revenue) }}</td>
+                    <td class="number">
+                        {% if i > 0 %}
+                            {% set prev_rev = company.historical[i-1].revenue %}
+                            {% if prev_rev > 0 %}
+                                {% set change = ((rev.revenue - prev_rev) / prev_rev * 100) %}
+                                <span style="color: {% if change >= 0 %}#27ae60{% else %}#e74c3c{% endif %};">
+                                    {{ "{:+.1f}".format(change) }}%
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Simple chart visualization -->
+    <div style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1rem;">Revenue Trend</h3>
+        <canvas id="chart-{{ company.company_name.replace(' ', '-') }}" style="max-height: 300px;"></canvas>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+<div class="card">
+    <h2>Quick Actions</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="/form/submit-revenue" class="btn btn-success">Submit New Revenue</a>
+        <a href="/dashboard/portfolio-metrics" class="btn">View Portfolio Metrics</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+function showHistory(companyName) {
+    const historyDiv = document.getElementById('history-' + companyName.replace(/ /g, '-'));
+    if (historyDiv.style.display === 'none') {
+        historyDiv.style.display = 'block';
+        historyDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Create chart if not already created
+        const canvas = historyDiv.querySelector('canvas');
+        if (canvas && !canvas.dataset.chartCreated) {
+            createChart(canvas, companyName);
+            canvas.dataset.chartCreated = 'true';
+        }
+    } else {
+        historyDiv.style.display = 'none';
+    }
+}
+
+function createChart(canvas, companyName) {
+    const revenueData = {{ revenue_data | tojson }};
+    const company = revenueData.find(c => c.company_name === companyName);
+
+    if (!company || !company.historical) return;
+
+    const labels = company.historical.map(h => h.period);
+    const data = company.historical.map(h => h.revenue);
+
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenue ($)',
+                data: data,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
