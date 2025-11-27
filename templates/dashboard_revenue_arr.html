@@ -1,68 +1,79 @@
 {% extends "base.html" %}
 
-{% block title %}Revenue & ARR History{% endblock %}
+{% block title %}Revenue & ARR History - GreatPoint Ventures{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>Historical Revenue & ARR Tracking</h2>
-    <p style="margin-bottom: 1.5rem; color: #6b7280;">Complete quarterly revenue and ARR history for all portfolio companies</p>
+<div class="page-header">
+    <h1>Revenue & ARR Historical Analysis</h1>
+    <p>Comprehensive quarterly revenue and ARR tracking with growth trends and visualizations</p>
+</div>
 
-    {% for company in company_histories %}
-    <div style="background: #f9fafb; padding: 2rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-        <h3>{{ company.company_name }}</h3>
+{% for company in company_histories %}
+<div class="company-section">
+    <h3>{{ company.company_name }}</h3>
 
-        <div style="overflow-x: auto; margin-top: 1rem;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Period</th>
-                        <th class="number">Revenue</th>
-                        <th class="number">Revenue Growth</th>
-                        <th class="number">ARR</th>
-                        <th class="number">ARR Growth</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for data in company.history %}
-                    <tr>
-                        <td><strong>{{ data.period }}</strong></td>
-                        <td class="number">${{ "{:,.0f}".format(data.revenue) }}</td>
-                        <td class="number">
-                            {% if data.revenue_growth > 0 %}
-                                <span class="badge badge-up">↑ {{ "{:.1f}".format(data.revenue_growth) }}%</span>
-                            {% elif data.revenue_growth < 0 %}
-                                <span class="badge badge-down">↓ {{ "{:.1f}".format(data.revenue_growth|abs) }}%</span>
-                            {% else %}
-                                <span class="badge badge-neutral">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="number">${{ "{:,.0f}".format(data.arr) }}</td>
-                        <td class="number">
-                            {% if data.arr_growth > 0 %}
-                                <span class="badge badge-up">↑ {{ "{:.1f}".format(data.arr_growth) }}%</span>
-                            {% elif data.arr_growth < 0 %}
-                                <span class="badge badge-down">↓ {{ "{:.1f}".format(data.arr_growth|abs) }}%</span>
-                            {% else %}
-                                <span class="badge badge-neutral">-</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="chart-container">
-            <canvas id="chart-{{ company.company_id }}"></canvas>
-        </div>
+    <div style="overflow-x: auto; margin-top: 1.5rem;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">QoQ Revenue Growth</th>
+                    <th class="number">ARR</th>
+                    <th class="number">QoQ ARR Growth</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in company.history %}
+                <tr>
+                    <td><strong>{{ data.period }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(data.revenue) }}</td>
+                    <td class="number">
+                        {% if data.revenue_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(data.revenue_growth) }}%</span>
+                        {% elif data.revenue_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(data.revenue_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="number">${{ "{:,.0f}".format(data.arr) }}</td>
+                    <td class="number">
+                        {% if data.arr_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(data.arr_growth) }}%</span>
+                        {% elif data.arr_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(data.arr_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% endfor %}
+
+    <div class="chart-container">
+        <div class="chart-title">Revenue & ARR Growth Trajectory</div>
+        <canvas id="chart-{{ company.company_id }}" style="height: 100%;"></canvas>
+    </div>
+</div>
+{% endfor %}
+
+<div style="margin-top: 2rem;">
+    <a href="/dashboard/current" class="btn btn-outline">Back to Current Metrics</a>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 const companyHistories = {{ company_histories | tojson }};
+
+// GPV Color Palette
+const gpvNavy = '#0a2540';
+const gpvGold = '#c9a961';
+const gpvBlue = '#1a4d7a';
+const gpvLightBlue = '#4a7ba7';
 
 companyHistories.forEach(company => {
     const ctx = document.getElementById(`chart-${company.company_id}`);
@@ -78,41 +89,111 @@ companyHistories.forEach(company => {
                 {
                     label: 'Revenue',
                     data: revenueData,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
+                    borderColor: gpvNavy,
+                    backgroundColor: 'rgba(10, 37, 64, 0.05)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 5,
+                    pointBackgroundColor: gpvNavy,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7
                 },
                 {
                     label: 'ARR',
                     data: arrData,
-                    borderColor: '#8b5cf6',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
+                    borderColor: gpvGold,
+                    backgroundColor: 'rgba(201, 169, 97, 0.05)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 5,
+                    pointBackgroundColor: gpvGold,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             plugins: {
-                title: {
-                    display: true,
-                    text: `${company.company_name} - Revenue & ARR Trend`,
-                    font: { size: 16, weight: 'bold' }
-                },
                 legend: {
-                    position: 'top'
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '600'
+                        },
+                        color: '#3f3f46',
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 37, 64, 0.95)',
+                    titleFont: {
+                        family: 'Inter',
+                        size: 13,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'Inter',
+                        size: 12
+                    },
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += '$' + context.parsed.y.toLocaleString();
+                            return label;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
                     ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 11
+                        },
+                        color: '#52525b',
                         callback: function(value) {
-                            return '$' + value.toLocaleString();
+                            return '$' + (value / 1000).toLocaleString() + 'K';
                         }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 11,
+                            weight: '500'
+                        },
+                        color: '#52525b'
                     }
                 }
             }
