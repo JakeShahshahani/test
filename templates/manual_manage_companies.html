@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Companies{% endblock %}
+{% block title %}Manage Companies - GreatPoint Ventures{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>Manage Portfolio Companies</h2>
-    <p style="margin-bottom: 1.5rem; color: #6b7280;">View all companies and enter/edit their quarterly data</p>
+<div class="page-header">
+    <h1>Portfolio Management</h1>
+    <p>View and manage all portfolio companies and their quarterly data</p>
+</div>
 
-    <div style="margin-bottom: 1.5rem;">
-        <a href="/manual/add-company" class="btn btn-success">+ Add New Company</a>
+<div style="margin-bottom: 2rem;">
+    <a href="/manual/add-company" class="btn btn-gold">Add New Company</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Portfolio Companies</h2>
+        <p>All active investments with data summary</p>
     </div>
 
     <table>
@@ -17,7 +24,7 @@
                 <th>Company Name</th>
                 <th>Industry</th>
                 <th>Latest Period</th>
-                <th>Quarters of Data</th>
+                <th class="number">Quarters of Data</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -25,21 +32,31 @@
             {% for company in companies %}
             <tr>
                 <td><strong>{{ company.name }}</strong></td>
-                <td>{{ company.industry or 'N/A' }}</td>
-                <td>{{ company.latest_period }}</td>
-                <td>{{ company.quarters_count }} quarters</td>
+                <td>{{ company.industry or '—' }}</td>
+                <td><span style="font-weight: 500;">{{ company.latest_period }}</span></td>
+                <td class="number">{{ company.quarters_count }} quarters</td>
                 <td>
                     <a href="/manual/enter-data/{{ company.id }}" class="btn btn-small">Enter Data</a>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" style="text-align: center; padding: 3rem; color: #9ca3af;">
-                    No companies yet. <a href="/manual/add-company" style="color: #2563eb;">Add your first company</a>
+                <td colspan="5" style="text-align: center; padding: 4rem; color: var(--gpv-gray-600);">
+                    <div style="font-size: 1.1rem; margin-bottom: 1rem;">No companies in portfolio</div>
+                    <a href="/manual/add-company" class="btn btn-gold">Add Your First Company</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<div class="info-box">
+    <h4>Quick Actions</h4>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+        <a href="/dashboard/current" class="btn btn-outline">View Current Metrics</a>
+        <a href="/dashboard/revenue-arr-history" class="btn btn-outline">View Revenue History</a>
+        <a href="/dashboard/google-form" class="btn btn-outline">Google Form Setup</a>
+    </div>
 </div>
 {% endblock %}

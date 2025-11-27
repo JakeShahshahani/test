@@ -1,18 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}Add Company{% endblock %}
+{% block title %}Add Company - GreatPoint Ventures{% endblock %}
 
 {% block content %}
+<div class="page-header">
+    <h1>Add Portfolio Company</h1>
+    <p>Add a new company to the GreatPoint Ventures portfolio</p>
+</div>
+
+{% if success %}
+<div class="alert alert-success">✓ {{ success }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">✗ {{ error }}</div>
+{% endif %}
+
 <div class="card">
-    <h2>Add New Portfolio Company</h2>
-
-    {% if success %}
-    <div class="alert alert-success">✓ {{ success }}</div>
-    {% endif %}
-
-    {% if error %}
-    <div class="alert alert-error">✗ {{ error }}</div>
-    {% endif %}
+    <div class="card-header">
+        <h2>Company Information</h2>
+        <p>Enter the basic details for the new portfolio company</p>
+    </div>
 
     <form method="POST">
         <div class="form-group">
@@ -22,23 +30,24 @@
 
         <div class="form-group">
             <label for="industry">Industry</label>
-            <input type="text" name="industry" id="industry" placeholder="e.g., Artificial Intelligence">
+            <input type="text" name="industry" id="industry" placeholder="e.g., Artificial Intelligence, SaaS, FinTech">
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-success">Add Company</button>
-            <a href="/manual/manage-companies" class="btn">Cancel</a>
+        <div style="display: flex; gap: 1rem; margin-top: 2.5rem;">
+            <button type="submit" class="btn btn-gold">Add Company</button>
+            <a href="/manual/manage-companies" class="btn btn-outline">Cancel</a>
         </div>
     </form>
 </div>
 
-<div class="card">
-    <h2>What Happens Next?</h2>
-    <ol style="margin-left: 2rem; line-height: 2; color: #4b5563;">
-        <li>Company is added to the database</li>
-        <li>You'll be redirected to enter quarterly data</li>
-        <li>Company appears on all dashboards</li>
+<div class="info-box">
+    <h4>What Happens Next?</h4>
+    <ol>
+        <li>Company will be added to the portfolio database</li>
+        <li>You'll be redirected to enter the first quarter's financial data</li>
+        <li>Company will appear across all dashboards</li>
         <li>Historical data can be added for any past quarters</li>
+        <li>Company will be available in the Google Form dropdown</li>
     </ol>
 </div>
 {% endblock %}

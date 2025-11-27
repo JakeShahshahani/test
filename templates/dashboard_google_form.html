@@ -1,40 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Google Form Integration{% endblock %}
+{% block title %}Google Form Integration - GreatPoint Ventures{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>Google Form Integration Setup</h2>
-    <p style="margin-bottom: 1.5rem; color: #6b7280;">Set up a Google Form for portfolio companies to submit their quarterly metrics</p>
+<div class="page-header">
+    <h1>Google Form Integration</h1>
+    <p>Automated data collection from portfolio companies via Google Forms</p>
+</div>
 
-    <div style="background: #fef3c7; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 2rem;">
-        <h3 style="color: #92400e; margin-bottom: 0.5rem;">📝 How It Works</h3>
-        <p style="color: #78350f; line-height: 1.8;">
-            1. Create a Google Form with the required fields<br>
-            2. Configure the form to send responses to the webhook URL below<br>
-            3. Portfolio companies fill out the form each quarter<br>
-            4. Data automatically updates all dashboards and charts
-        </p>
-    </div>
-
-    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-        <h3>Webhook URL</h3>
-        <p style="margin: 0.5rem 0; color: #6b7280;">Configure your Google Form to POST data to this URL:</p>
-        <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 2px solid #e5e7eb; margin-top: 1rem; font-family: monospace; word-break: break-all;">
-            {{ webhook_url }}
-        </div>
-        <button class="btn btn-small" style="margin-top: 1rem;" onclick="copyWebhook()">Copy URL</button>
-    </div>
+<div class="info-box">
+    <h4>How It Works</h4>
+    <ol>
+        <li>Create a Google Form with the required fields listed below</li>
+        <li>Configure the form to send responses to the webhook URL</li>
+        <li>Portfolio companies fill out the form each quarter</li>
+        <li>Data automatically updates all dashboards, charts, and historical records</li>
+    </ol>
 </div>
 
 <div class="card">
-    <h2>Required Google Form Fields</h2>
-    <p style="margin-bottom: 1.5rem; color: #6b7280;">Your Google Form must include these fields (exact names matter for auto-mapping)</p>
+    <div class="card-header">
+        <h2>Webhook Configuration</h2>
+        <p>Configure your Google Form to POST data to this endpoint</p>
+    </div>
 
-    <div class="grid grid-2">
+    <div class="code-block">{{ webhook_url }}</div>
+
+    <button class="btn btn-small" onclick="navigator.clipboard.writeText('{{ webhook_url }}').then(() => alert('Webhook URL copied!'))" style="margin-top: 1rem;">
+        Copy Webhook URL
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Required Form Fields</h2>
+        <p>Your Google Form must include these fields (exact field names)</p>
+    </div>
+
+    <div class="form-grid form-grid-2">
         <div>
-            <h3 style="color: #dc2626;">Required Fields</h3>
-            <table style="margin-top: 1rem;">
+            <h3 style="color: var(--gpv-navy); margin-bottom: 1rem; font-size: 1.1rem;">Required Fields</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>Field Name</th>
@@ -46,7 +52,7 @@
                     <tr>
                         <td><code>Company Name</code></td>
                         <td>Dropdown</td>
-                        <td>Select from list</td>
+                        <td>Company selection</td>
                     </tr>
                     <tr>
                         <td><code>Year</code></td>
@@ -61,20 +67,20 @@
                     <tr>
                         <td><code>Revenue</code></td>
                         <td>Number</td>
-                        <td>Total revenue</td>
+                        <td>Total revenue ($)</td>
                     </tr>
                     <tr>
                         <td><code>ARR</code></td>
                         <td>Number</td>
-                        <td>Annual recurring revenue</td>
+                        <td>Annual recurring revenue ($)</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <div>
-            <h3 style="color: #059669;">Optional Fields</h3>
-            <table style="margin-top: 1rem;">
+            <h3 style="color: var(--gpv-navy); margin-bottom: 1rem; font-size: 1.1rem;">Optional Fields</h3>
+            <table>
                 <thead>
                     <tr>
                         <th>Field Name</th>
@@ -97,48 +103,28 @@
 </div>
 
 <div class="card">
-    <h2>Company List for Form Dropdown</h2>
-    <p style="margin-bottom: 1.5rem; color: #6b7280;">Add these companies to your Google Form dropdown:</p>
+    <div class="card-header">
+        <h2>Portfolio Companies</h2>
+        <p>Add these companies to your Google Form dropdown</p>
+    </div>
 
-    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem;">
-        <ul style="margin-left: 2rem; line-height: 2;">
+    <div style="background: var(--gpv-gray-50); padding: 2rem; border-left: 4px solid var(--gpv-navy);">
+        <ul style="list-style: none; columns: 2; column-gap: 3rem;">
             {% for company in companies %}
-            <li><strong>{{ company.name }}</strong>{% if company.industry %} ({{ company.industry }}){% endif %}</li>
+            <li style="margin-bottom: 0.75rem;">
+                <strong style="color: var(--gpv-navy);">{{ company.name }}</strong>
+                {% if company.industry %}<span style="color: var(--gpv-gray-600);"> — {{ company.industry }}</span>{% endif %}
+            </li>
             {% endfor %}
         </ul>
     </div>
 </div>
 
-<div class="card">
-    <h2>Setup Instructions</h2>
-    <ol style="margin-left: 2rem; line-height: 2; color: #4b5563;">
-        <li>Create a new Google Form</li>
-        <li>Add all required fields (exact names as shown above)</li>
-        <li>Add optional fields as needed</li>
-        <li>For "Company Name", create a dropdown with all portfolio companies</li>
-        <li>Install the "Form Publisher" or "Form to Webhook" add-on</li>
-        <li>Configure the add-on to POST form responses to the webhook URL above</li>
-        <li>Test the form by submitting sample data</li>
-        <li>Check the dashboards to verify data appears correctly</li>
-    </ol>
-
-    <div style="background: #dbeafe; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; margin-top: 2rem;">
-        <h3 style="color: #1e3a8a; margin-bottom: 0.5rem;">💡 Alternative: Use Manual Entry</h3>
-        <p style="color: #1e40af; margin-bottom: 1rem;">
-            If Google Forms integration is too complex, you can use our built-in manual entry form instead.
-        </p>
-        <a href="/manual/manage-companies" class="btn">Go to Manual Entry</a>
-    </div>
+<div class="info-box" style="background: rgba(201, 169, 97, 0.1); border-color: var(--gpv-gold);">
+    <h4>Alternative: Manual Entry</h4>
+    <p style="margin-bottom: 1rem;">
+        If Google Forms integration is not suitable, you can use the built-in manual entry system to add and update quarterly data.
+    </p>
+    <a href="/manual/manage-companies" class="btn btn-gold">Go to Manual Entry</a>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function copyWebhook() {
-    const url = "{{ webhook_url }}";
-    navigator.clipboard.writeText(url).then(() => {
-        alert('Webhook URL copied to clipboard!');
-    });
-}
-</script>
 {% endblock %}

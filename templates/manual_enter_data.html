@@ -1,21 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Enter Data - {{ company.name }}{% endblock %}
+{% block title %}Enter Data - {{ company.name }} - GreatPoint Ventures{% endblock %}
 
 {% block content %}
+<div class="page-header">
+    <h1>{{ company.name }}</h1>
+    <p>Enter or update quarterly financial metrics</p>
+</div>
+
+{% if success %}
+<div class="alert alert-success">✓ {{ success }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">✗ {{ error }}</div>
+{% endif %}
+
 <div class="card">
-    <h2>Enter Quarterly Data: {{ company.name }}</h2>
-
-    {% if success %}
-    <div class="alert alert-success">✓ {{ success }}</div>
-    {% endif %}
-
-    {% if error %}
-    <div class="alert alert-error">✗ {{ error }}</div>
-    {% endif %}
+    <div class="card-header">
+        <h2>Quarterly Data Entry</h2>
+        <p>Complete financial metrics for the specified quarter</p>
+    </div>
 
     <form method="POST">
-        <div class="grid grid-2">
+        <div class="form-grid form-grid-2">
             <div class="form-group">
                 <label for="year">Year *</label>
                 <input type="number" name="year" id="year" min="2020" max="2030" value="2024" required>
@@ -25,76 +33,76 @@
                 <label for="quarter">Quarter *</label>
                 <select name="quarter" id="quarter" required>
                     <option value="">Select quarter...</option>
-                    <option value="1">Q1</option>
-                    <option value="2">Q2</option>
-                    <option value="3">Q3</option>
-                    <option value="4">Q4</option>
+                    <option value="1">Q1 (January - March)</option>
+                    <option value="2">Q2 (April - June)</option>
+                    <option value="3">Q3 (July - September)</option>
+                    <option value="4">Q4 (October - December)</option>
                 </select>
             </div>
         </div>
 
-        <h3 style="margin: 2rem 0 1rem;">Core Metrics</h3>
-        <div class="grid grid-2">
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Core Financial Metrics</h3>
+        <div class="form-grid form-grid-2">
             <div class="form-group">
                 <label for="revenue">Revenue ($)</label>
-                <input type="number" name="revenue" id="revenue" step="0.01" value="0">
+                <input type="number" name="revenue" id="revenue" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label for="arr">ARR ($)</label>
-                <input type="number" name="arr" id="arr" step="0.01" value="0">
+                <label for="arr">Annual Recurring Revenue ($)</label>
+                <input type="number" name="arr" id="arr" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
                 <label for="headcount">Headcount</label>
-                <input type="number" name="headcount" id="headcount" value="0">
+                <input type="number" name="headcount" id="headcount" value="0" placeholder="0">
             </div>
 
             <div class="form-group">
                 <label for="gross_profit">Gross Profit ($)</label>
-                <input type="number" name="gross_profit" id="gross_profit" step="0.01" value="0">
+                <input type="number" name="gross_profit" id="gross_profit" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label for="gross_profit_percent">Gross Profit %</label>
-                <input type="number" name="gross_profit_percent" id="gross_profit_percent" step="0.1" min="0" max="100" value="0">
+                <label for="gross_profit_percent">Gross Profit Margin (%)</label>
+                <input type="number" name="gross_profit_percent" id="gross_profit_percent" step="0.1" min="0" max="100" value="0" placeholder="0.0">
             </div>
         </div>
 
-        <h3 style="margin: 2rem 0 1rem;">Operating Expenses</h3>
-        <div class="grid grid-3">
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Operating Expenses</h3>
+        <div class="form-grid form-grid-3">
             <div class="form-group">
                 <label for="sales_marketing">Sales & Marketing ($)</label>
-                <input type="number" name="sales_marketing" id="sales_marketing" step="0.01" value="0">
+                <input type="number" name="sales_marketing" id="sales_marketing" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label for="research_development">R&D ($)</label>
-                <input type="number" name="research_development" id="research_development" step="0.01" value="0">
+                <label for="research_development">Research & Development ($)</label>
+                <input type="number" name="research_development" id="research_development" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label for="general_administrative">G&A ($)</label>
-                <input type="number" name="general_administrative" id="general_administrative" step="0.01" value="0">
+                <label for="general_administrative">General & Administrative ($)</label>
+                <input type="number" name="general_administrative" id="general_administrative" step="0.01" value="0" placeholder="0.00">
             </div>
         </div>
 
-        <h3 style="margin: 2rem 0 1rem;">Cash Position</h3>
-        <div class="grid grid-2">
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Cash Position</h3>
+        <div class="form-grid form-grid-2">
             <div class="form-group">
-                <label for="eop_cash">EOP Cash ($)</label>
-                <input type="number" name="eop_cash" id="eop_cash" step="0.01" value="0">
+                <label for="eop_cash">End of Period Cash ($)</label>
+                <input type="number" name="eop_cash" id="eop_cash" step="0.01" value="0" placeholder="0.00">
             </div>
 
             <div class="form-group">
-                <label for="eop_runway">EOP Runway (months)</label>
-                <input type="number" name="eop_runway" id="eop_runway" step="0.1" value="0">
+                <label for="eop_runway">Cash Runway (months)</label>
+                <input type="number" name="eop_runway" id="eop_runway" step="0.1" value="0" placeholder="0.0">
             </div>
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-success">Save Quarterly Data</button>
-            <a href="/manual/manage-companies" class="btn">Back to Companies</a>
+        <div style="display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--gpv-gray-200);">
+            <button type="submit" class="btn btn-gold">Save Quarterly Data</button>
+            <a href="/manual/manage-companies" class="btn btn-outline">Back to Companies</a>
         </div>
     </form>
 </div>
