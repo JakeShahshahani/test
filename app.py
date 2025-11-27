@@ -542,7 +542,7 @@ if __name__ == '__main__':
     print("="*60)
     print("VC PORTFOLIO MANAGEMENT SYSTEM")
     print("="*60)
-    print("\n🌐 Access the application at: http://localhost:5001\n")
+    print("\n🌐 Access the application at: http://localhost:5002\n")
     print("📊 DASHBOARDS:")
     print("  1. Current Metrics:      /dashboard/current")
     print("  2. Revenue & ARR History: /dashboard/revenue-arr-history")
@@ -556,4 +556,4 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print("Press CTRL+C to stop\n")
 
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5002)
