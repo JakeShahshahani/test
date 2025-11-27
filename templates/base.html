@@ -59,15 +59,36 @@
         }
 
         .logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--gpv-white);
-            letter-spacing: -0.02em;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
-        .logo-accent {
-            color: var(--gpv-gold);
+        .logo-main {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gpv-white);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .logo-tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            background: linear-gradient(90deg, #d97292 0%, #c9a961 25%, #a8b661 50%, #6bc9a9 75%, #4a9dd4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 8s ease infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         /* Navigation */
@@ -506,7 +527,8 @@
     <div class="header">
         <div class="container">
             <div class="logo">
-                Great<span class="logo-accent">Point</span> Ventures
+                <div class="logo-main">GREATPOINT</div>
+                <div class="logo-tagline">make no little plans</div>
             </div>
             <div style="color: var(--gpv-gray-300); font-size: 0.85rem; letter-spacing: 0.05em;">
                 PORTFOLIO MANAGEMENT

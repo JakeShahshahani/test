@@ -2,10 +2,42 @@
 
 {% block title %}Enter Data - {{ company.name }} - GreatPoint Ventures{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(201, 169, 97, 0.05) 0%, rgba(10, 37, 64, 0.03) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, #c9a961 0%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--gpv-gray-600);
+        max-width: 600px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1>{{ company.name }}</h1>
-    <p>Enter or update quarterly financial metrics</p>
+<div class="hero-section">
+    <h1 class="hero-title">{{ company.name }}</h1>
+    <p class="hero-subtitle">Quarterly financial data entry and updates</p>
 </div>
 
 {% if success %}

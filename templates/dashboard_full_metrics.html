@@ -2,10 +2,42 @@
 
 {% block title %}Full Metrics History - GreatPoint Ventures{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(74, 123, 167, 0.05) 0%, rgba(201, 169, 97, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #4a7ba7 0%, #c9a961 50%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: var(--gpv-gray-600);
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1>Complete Metrics History</h1>
-    <p>Comprehensive quarterly financial metrics tracking across all portfolio companies</p>
+<div class="hero-section">
+    <h1 class="hero-title">Complete Metrics History</h1>
+    <p class="hero-subtitle">Comprehensive financial tracking with detailed quarterly data and visualizations</p>
 </div>
 
 {% for company in company_metrics %}
