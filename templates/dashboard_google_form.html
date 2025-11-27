@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Google Form Integration{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Google Form Integration Setup</h2>
+    <p style="margin-bottom: 1.5rem; color: #6b7280;">Set up a Google Form for portfolio companies to submit their quarterly metrics</p>
+
+    <div style="background: #fef3c7; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #f59e0b; margin-bottom: 2rem;">
+        <h3 style="color: #92400e; margin-bottom: 0.5rem;">📝 How It Works</h3>
+        <p style="color: #78350f; line-height: 1.8;">
+            1. Create a Google Form with the required fields<br>
+            2. Configure the form to send responses to the webhook URL below<br>
+            3. Portfolio companies fill out the form each quarter<br>
+            4. Data automatically updates all dashboards and charts
+        </p>
+    </div>
+
+    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+        <h3>Webhook URL</h3>
+        <p style="margin: 0.5rem 0; color: #6b7280;">Configure your Google Form to POST data to this URL:</p>
+        <div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 2px solid #e5e7eb; margin-top: 1rem; font-family: monospace; word-break: break-all;">
+            {{ webhook_url }}
+        </div>
+        <button class="btn btn-small" style="margin-top: 1rem;" onclick="copyWebhook()">Copy URL</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Required Google Form Fields</h2>
+    <p style="margin-bottom: 1.5rem; color: #6b7280;">Your Google Form must include these fields (exact names matter for auto-mapping)</p>
+
+    <div class="grid grid-2">
+        <div>
+            <h3 style="color: #dc2626;">Required Fields</h3>
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Company Name</code></td>
+                        <td>Dropdown</td>
+                        <td>Select from list</td>
+                    </tr>
+                    <tr>
+                        <td><code>Year</code></td>
+                        <td>Number</td>
+                        <td>e.g., 2024</td>
+                    </tr>
+                    <tr>
+                        <td><code>Quarter</code></td>
+                        <td>Dropdown</td>
+                        <td>1, 2, 3, or 4</td>
+                    </tr>
+                    <tr>
+                        <td><code>Revenue</code></td>
+                        <td>Number</td>
+                        <td>Total revenue</td>
+                    </tr>
+                    <tr>
+                        <td><code>ARR</code></td>
+                        <td>Number</td>
+                        <td>Annual recurring revenue</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h3 style="color: #059669;">Optional Fields</h3>
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>Headcount</code></td><td>Number</td></tr>
+                    <tr><td><code>Gross Profit</code></td><td>Number</td></tr>
+                    <tr><td><code>Gross Profit %</code></td><td>Number</td></tr>
+                    <tr><td><code>Sales & Marketing</code></td><td>Number</td></tr>
+                    <tr><td><code>R&D</code></td><td>Number</td></tr>
+                    <tr><td><code>G&A</code></td><td>Number</td></tr>
+                    <tr><td><code>EOP Cash</code></td><td>Number</td></tr>
+                    <tr><td><code>EOP Runway</code></td><td>Number</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Company List for Form Dropdown</h2>
+    <p style="margin-bottom: 1.5rem; color: #6b7280;">Add these companies to your Google Form dropdown:</p>
+
+    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem;">
+        <ul style="margin-left: 2rem; line-height: 2;">
+            {% for company in companies %}
+            <li><strong>{{ company.name }}</strong>{% if company.industry %} ({{ company.industry }}){% endif %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Setup Instructions</h2>
+    <ol style="margin-left: 2rem; line-height: 2; color: #4b5563;">
+        <li>Create a new Google Form</li>
+        <li>Add all required fields (exact names as shown above)</li>
+        <li>Add optional fields as needed</li>
+        <li>For "Company Name", create a dropdown with all portfolio companies</li>
+        <li>Install the "Form Publisher" or "Form to Webhook" add-on</li>
+        <li>Configure the add-on to POST form responses to the webhook URL above</li>
+        <li>Test the form by submitting sample data</li>
+        <li>Check the dashboards to verify data appears correctly</li>
+    </ol>
+
+    <div style="background: #dbeafe; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; margin-top: 2rem;">
+        <h3 style="color: #1e3a8a; margin-bottom: 0.5rem;">💡 Alternative: Use Manual Entry</h3>
+        <p style="color: #1e40af; margin-bottom: 1rem;">
+            If Google Forms integration is too complex, you can use our built-in manual entry form instead.
+        </p>
+        <a href="/manual/manage-companies" class="btn">Go to Manual Entry</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyWebhook() {
+    const url = "{{ webhook_url }}";
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Webhook URL copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

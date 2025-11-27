@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Add Company{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Add New Portfolio Company</h2>
+
+    {% if success %}
+    <div class="alert alert-success">✓ {{ success }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">✗ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="company_name">Company Name *</label>
+            <input type="text" name="company_name" id="company_name" placeholder="e.g., TechFlow AI" required autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="industry">Industry</label>
+            <input type="text" name="industry" id="industry" placeholder="e.g., Artificial Intelligence">
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-success">Add Company</button>
+            <a href="/manual/manage-companies" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>What Happens Next?</h2>
+    <ol style="margin-left: 2rem; line-height: 2; color: #4b5563;">
+        <li>Company is added to the database</li>
+        <li>You'll be redirected to enter quarterly data</li>
+        <li>Company appears on all dashboards</li>
+        <li>Historical data can be added for any past quarters</li>
+    </ol>
+</div>
+{% endblock %}

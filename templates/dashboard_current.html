@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Current Metrics Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-3">
+    {% set total_companies = current_data|length %}
+    {% set total_revenue = current_data|sum(attribute='revenue') %}
+    {% set total_arr = current_data|sum(attribute='arr') %}
+
+    <div class="stat-card">
+        <h3>Total Companies</h3>
+        <div class="value">{{ total_companies }}</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Total Revenue (Latest Quarter)</h3>
+        <div class="value">${{ "{:,.0f}".format(total_revenue) }}</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Total ARR</h3>
+        <div class="value">${{ "{:,.0f}".format(total_arr) }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Current Quarterly Metrics</h2>
+    <p style="margin-bottom: 1.5rem; color: #6b7280;">Latest quarterly data for all portfolio companies with quarter-over-quarter growth</p>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Industry</th>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">Revenue Growth</th>
+                    <th class="number">ARR</th>
+                    <th class="number">ARR Growth</th>
+                    <th class="number">Headcount</th>
+                    <th class="number">GP %</th>
+                    <th class="number">Cash</th>
+                    <th class="number">Runway</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in current_data %}
+                <tr>
+                    <td><strong>{{ company.company_name }}</strong></td>
+                    <td>{{ company.industry or 'N/A' }}</td>
+                    <td>{{ company.period }}</td>
+                    <td class="number">${{ "{:,.0f}".format(company.revenue) }}</td>
+                    <td class="number">
+                        {% if company.revenue_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(company.revenue_growth) }}%</span>
+                        {% elif company.revenue_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(company.revenue_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="number">${{ "{:,.0f}".format(company.arr) }}</td>
+                    <td class="number">
+                        {% if company.arr_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(company.arr_growth) }}%</span>
+                        {% elif company.arr_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(company.arr_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="number">{{ company.headcount }}</td>
+                    <td class="number">{{ "{:.1f}".format(company.gross_profit_percent) }}%</td>
+                    <td class="number">${{ "{:,.0f}".format(company.eop_cash) }}</td>
+                    <td class="number">{{ "{:.1f}".format(company.eop_runway) }} mo</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Quick Actions</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="/manual/add-company" class="btn btn-success">Add New Company</a>
+        <a href="/manual/manage-companies" class="btn">Manage Companies</a>
+        <a href="/dashboard/revenue-arr-history" class="btn">View Revenue History</a>
+    </div>
+</div>
+{% endblock %}

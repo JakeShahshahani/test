@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Companies{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Manage Portfolio Companies</h2>
+    <p style="margin-bottom: 1.5rem; color: #6b7280;">View all companies and enter/edit their quarterly data</p>
+
+    <div style="margin-bottom: 1.5rem;">
+        <a href="/manual/add-company" class="btn btn-success">+ Add New Company</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Industry</th>
+                <th>Latest Period</th>
+                <th>Quarters of Data</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in companies %}
+            <tr>
+                <td><strong>{{ company.name }}</strong></td>
+                <td>{{ company.industry or 'N/A' }}</td>
+                <td>{{ company.latest_period }}</td>
+                <td>{{ company.quarters_count }} quarters</td>
+                <td>
+                    <a href="/manual/enter-data/{{ company.id }}" class="btn btn-small">Enter Data</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 3rem; color: #9ca3af;">
+                    No companies yet. <a href="/manual/add-company" style="color: #2563eb;">Add your first company</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
