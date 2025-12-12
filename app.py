@@ -558,7 +558,7 @@ if __name__ == '__main__':
     print("="*60)
     print("GREATPOINT VENTURES PORTFOLIO MANAGEMENT SYSTEM")
     print("="*60)
-    print("\n🌐 Access the application at: http://localhost:5002\n")
+    print("\n🌐 Access the application at: http://localhost:5003\n")
     print("📊 PAGES:")
     print("  1. Main Dashboard:         /dashboard/overview")
     print("  2. Revenue & ARR History:  /dashboard/revenue-arr-by-fund")
@@ -568,4 +568,4 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print("Press CTRL+C to stop\n")
 
-    app.run(debug=True, host='0.0.0.0', port=5002)
+    app.run(debug=True, host='0.0.0.0', port=5003)
