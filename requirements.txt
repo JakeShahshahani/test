@@ -1,2 +1,20 @@
+# Core Dependencies
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
+
+# Production Dependencies
+gunicorn==21.2.0
+python-dotenv==1.0.0
+psycopg2-binary==2.9.9
+
+# Optional but recommended for production
+redis==5.0.1
+Flask-Limiter==3.5.0
+Flask-Cors==4.0.0
+sentry-sdk[flask]==1.39.1
+
+# Database migrations
+Flask-Migrate==4.0.5
+
+# Security
+cryptography==41.0.7
