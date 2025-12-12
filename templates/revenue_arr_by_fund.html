@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue & ARR History - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(201, 169, 97, 0.05) 0%, rgba(10, 37, 64, 0.03) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #c9a961 0%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .filter-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--gpv-white);
+        border: 1px solid var(--gpv-gray-200);
+    }
+
+    .filter-section select {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: 1px solid var(--gpv-gray-300);
+        background: var(--gpv-white);
+        min-width: 250px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Revenue & ARR Growth</h1>
+    <p class="hero-subtitle">Historical performance tracking with quarter-over-quarter analysis</p>
+</div>
+
+<div class="filter-section">
+    <form method="GET" action="/dashboard/revenue-arr-by-fund" style="display: flex; align-items: center; gap: 1rem;">
+        <label for="fund_filter" style="font-weight: 600; color: var(--gpv-navy);">Filter by Fund:</label>
+        <select name="fund_id" id="fund_filter" onchange="this.form.submit()">
+            <option value="">All Funds</option>
+            {% for fund in funds %}
+            <option value="{{ fund.id }}" {% if selected_fund and fund.id == selected_fund.id %}selected{% endif %}>
+                {{ fund.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+{% for company in company_data %}
+<div class="company-section">
+    <h3>{{ company.company_name }} <span style="color: var(--gpv-gray-600); font-size: 0.9rem; font-weight: 400;">({{ company.fund_name }})</span></h3>
+
+    <div style="overflow-x: auto; margin-top: 1.5rem;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">ARR</th>
+                    <th class="number">ARR Projection</th>
+                    <th class="number">QoQ Growth</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in company.history %}
+                <tr>
+                    <td><strong>{{ data.period }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(data.revenue) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.arr) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.arr_projection) if data.arr_projection > 0 else '—' }}</td>
+                    <td class="number">
+                        {% if data.qoq_growth %}
+                            {% if data.qoq_growth > 0 %}
+                                <span class="badge badge-up">↑ {{ "{:.1f}".format(data.qoq_growth) }}%</span>
+                            {% elif data.qoq_growth < 0 %}
+                                <span class="badge badge-down">↓ {{ "{:.1f}".format(data.qoq_growth|abs) }}%</span>
+                            {% else %}
+                                <span class="badge badge-neutral">—</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+        <button class="btn btn-outline btn-small" onclick="toggleChart{{ company.company_id }}()">View Chart</button>
+    </div>
+
+    <div id="chart{{ company.company_id }}" style="display: none; margin-top: 2rem;">
+        <div class="chart-container">
+            <canvas id="canvas{{ company.company_id }}"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+let chart{{ company.company_id }} = null;
+
+function toggleChart{{ company.company_id }}() {
+    const chartDiv = document.getElementById('chart{{ company.company_id }}');
+    if (chartDiv.style.display === 'none') {
+        chartDiv.style.display = 'block';
+        if (!chart{{ company.company_id }}) {
+            loadChart{{ company.company_id }}();
+        }
+    } else {
+        chartDiv.style.display = 'none';
+    }
+}
+
+function loadChart{{ company.company_id }}() {
+    const ctx = document.getElementById('canvas{{ company.company_id }}').getContext('2d');
+    const labels = {{ company.history | map(attribute='period') | reverse | list | tojson }};
+    const revenueData = {{ company.history | map(attribute='revenue') | reverse | list | tojson }};
+    const arrData = {{ company.history | map(attribute='arr') | reverse | list | tojson }};
+
+    chart{{ company.company_id }} = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: revenueData,
+                    borderColor: '#0a2540',
+                    backgroundColor: 'rgba(10, 37, 64, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#0a2540',
+                    tension: 0.3
+                },
+                {
+                    label: 'ARR',
+                    data: arrData,
+                    borderColor: '#c9a961',
+                    backgroundColor: 'rgba(201, 169, 97, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#c9a961',
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 1000000).toFixed(1) + 'M';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endfor %}
+
+{% if not company_data %}
+<div class="card">
+    <p style="text-align: center; color: var(--gpv-gray-600);">No data available.</p>
+</div>
+{% endif %}
+
+{% endblock %}

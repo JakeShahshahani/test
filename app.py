@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Complete VC Portfolio Management System
-With Google Form Integration, Multiple Dashboards, and Visualizations
+GreatPoint Ventures Portfolio Management System
+Multi-Fund Architecture with Google Form Integration
 """
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 import json
 
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///portfolio.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'vc-portfolio-secret-key-2024'
+app.config['SECRET_KEY'] = 'greatpoint-ventures-2024'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
@@ -22,13 +22,31 @@ db = SQLAlchemy(app)
 
 # ==================== DATABASE MODELS ====================
 
+class Fund(db.Model):
+    """Investment Fund (Fund 1, Fund 2, Fund 3)"""
+    __tablename__ = 'funds'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    vintage_year = db.Column(db.Integer)
+    fund_size = db.Column(db.Float)  # in millions
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    companies = db.relationship('Company', backref='fund', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Fund {self.name}>'
+
+
 class Company(db.Model):
-    """Portfolio company"""
+    """Portfolio Company"""
     __tablename__ = 'companies'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False, unique=True)
     industry = db.Column(db.String(100))
+    fund_id = db.Column(db.Integer, db.ForeignKey('funds.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -39,7 +57,7 @@ class Company(db.Model):
 
 
 class QuarterlyData(db.Model):
-    """Complete quarterly financial data for each company"""
+    """Quarterly Financial Metrics"""
     __tablename__ = 'quarterly_data'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -49,9 +67,8 @@ class QuarterlyData(db.Model):
 
     # Core metrics
     revenue = db.Column(db.Float, default=0)
-    arr = db.Column(db.Float, default=0)  # Annual Recurring Revenue
-
-    # Additional metrics
+    arr = db.Column(db.Float, default=0)
+    arr_projection = db.Column(db.Float, default=0)  # End-of-year ARR projection
     headcount = db.Column(db.Integer, default=0)
     gross_profit = db.Column(db.Float, default=0)
     gross_profit_percent = db.Column(db.Float, default=0)
@@ -67,26 +84,9 @@ class QuarterlyData(db.Model):
     # Unique constraint
     __table_args__ = (db.UniqueConstraint('company_id', 'year', 'quarter', name='_company_quarter_uc'),)
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'company_id': self.company_id,
-            'company_name': self.company.name,
-            'year': self.year,
-            'quarter': self.quarter,
-            'period': f'Q{self.quarter} {self.year}',
-            'revenue': self.revenue,
-            'arr': self.arr,
-            'headcount': self.headcount,
-            'gross_profit': self.gross_profit,
-            'gross_profit_percent': self.gross_profit_percent,
-            'sales_marketing': self.sales_marketing,
-            'research_development': self.research_development,
-            'general_administrative': self.general_administrative,
-            'eop_cash': self.eop_cash,
-            'eop_runway': self.eop_runway,
-            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None
-        }
+    @property
+    def period(self):
+        return f'Q{self.quarter} {self.year}'
 
     def __repr__(self):
         return f'<QuarterlyData {self.company.name} Q{self.quarter} {self.year}>'
@@ -94,194 +94,247 @@ class QuarterlyData(db.Model):
 
 # ==================== HELPER FUNCTIONS ====================
 
-def get_latest_data_for_company(company_id):
-    """Get the most recent quarterly data for a company"""
-    return QuarterlyData.query.filter_by(company_id=company_id).order_by(
-        desc(QuarterlyData.year), desc(QuarterlyData.quarter)
+def get_fund_aggregates(fund_id):
+    """Get aggregate metrics for a fund"""
+    companies = Company.query.filter_by(fund_id=fund_id).all()
+
+    total_companies = len(companies)
+    total_arr = 0
+    total_revenue = 0
+    growth_rates = []
+
+    for company in companies:
+        # Get latest data
+        latest = QuarterlyData.query.filter_by(company_id=company.id)\
+            .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).first()
+
+        if latest:
+            total_arr += latest.arr
+            total_revenue += latest.revenue
+
+            # Calculate QoQ growth
+            prev_quarter = get_previous_quarter(latest.year, latest.quarter)
+            if prev_quarter:
+                prev_data = QuarterlyData.query.filter_by(
+                    company_id=company.id,
+                    year=prev_quarter[0],
+                    quarter=prev_quarter[1]
+                ).first()
+
+                if prev_data and prev_data.arr > 0:
+                    growth = ((latest.arr - prev_data.arr) / prev_data.arr) * 100
+                    growth_rates.append(growth)
+
+    avg_growth = sum(growth_rates) / len(growth_rates) if growth_rates else 0
+
+    return {
+        'total_companies': total_companies,
+        'total_arr': total_arr,
+        'total_revenue': total_revenue,
+        'avg_growth': avg_growth
+    }
+
+
+def get_previous_quarter(year, quarter):
+    """Get previous quarter (year, quarter)"""
+    if quarter == 1:
+        return (year - 1, 4)
+    else:
+        return (year, quarter - 1)
+
+
+def calculate_qoq_growth(company_id, year, quarter, metric='arr'):
+    """Calculate quarter-over-quarter growth for a metric"""
+    current = QuarterlyData.query.filter_by(
+        company_id=company_id, year=year, quarter=quarter
     ).first()
 
+    if not current:
+        return None
 
-def get_all_historical_data(company_id):
-    """Get all historical quarterly data for a company, sorted chronologically"""
-    return QuarterlyData.query.filter_by(company_id=company_id).order_by(
-        QuarterlyData.year.asc(), QuarterlyData.quarter.asc()
-    ).all()
+    prev_quarter = get_previous_quarter(year, quarter)
+    prev = QuarterlyData.query.filter_by(
+        company_id=company_id,
+        year=prev_quarter[0],
+        quarter=prev_quarter[1]
+    ).first()
+
+    if not prev:
+        return None
+
+    current_value = getattr(current, metric, 0)
+    prev_value = getattr(prev, metric, 0)
+
+    if prev_value == 0:
+        return None
+
+    growth = ((current_value - prev_value) / prev_value) * 100
+    return round(growth, 1)
 
 
-def calculate_qoq_growth(current, previous):
-    """Calculate quarter-over-quarter growth percentage"""
-    if previous and previous > 0:
-        return ((current - previous) / previous) * 100
-    return 0
-
-
-# ==================== MAIN ROUTES ====================
+# ==================== ROUTES ====================
 
 @app.route('/')
 def index():
-    """Homepage - redirect to current metrics dashboard"""
-    return redirect(url_for('dashboard_current'))
+    """Redirect to main dashboard"""
+    return redirect(url_for('dashboard_overview'))
 
 
-# ==================== DASHBOARD 1: CURRENT METRICS ====================
+# ==================== PAGE 1: MAIN DASHBOARD ====================
 
-@app.route('/dashboard/current')
-def dashboard_current():
-    """Dashboard showing latest quarterly metrics for all companies"""
-    companies = Company.query.order_by(Company.name).all()
+@app.route('/dashboard/overview')
+def dashboard_overview():
+    """Main Dashboard - Portfolio Overview by Fund"""
+    funds = Fund.query.all()
 
-    current_data = []
-    for company in companies:
-        latest = get_latest_data_for_company(company.id)
+    fund_data = []
+    for fund in funds:
+        aggregates = get_fund_aggregates(fund.id)
 
-        if latest:
-            # Get previous quarter for growth calculation
-            all_data = get_all_historical_data(company.id)
-            previous = all_data[-2] if len(all_data) >= 2 else None
+        # Get companies with latest metrics
+        companies = Company.query.filter_by(fund_id=fund.id).all()
+        company_metrics = []
 
-            revenue_growth = calculate_qoq_growth(latest.revenue, previous.revenue if previous else 0)
-            arr_growth = calculate_qoq_growth(latest.arr, previous.arr if previous else 0)
+        for company in companies:
+            latest = QuarterlyData.query.filter_by(company_id=company.id)\
+                .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).first()
 
-            current_data.append({
-                'company_id': company.id,
-                'company_name': company.name,
-                'industry': company.industry,
-                'period': f'Q{latest.quarter} {latest.year}',
-                'revenue': latest.revenue,
-                'arr': latest.arr,
-                'revenue_growth': revenue_growth,
-                'arr_growth': arr_growth,
-                'headcount': latest.headcount,
-                'gross_profit_percent': latest.gross_profit_percent,
-                'eop_cash': latest.eop_cash,
-                'eop_runway': latest.eop_runway
-            })
-        else:
-            current_data.append({
-                'company_id': company.id,
-                'company_name': company.name,
-                'industry': company.industry,
-                'period': 'No data',
-                'revenue': 0,
-                'arr': 0,
-                'revenue_growth': 0,
-                'arr_growth': 0,
-                'headcount': 0,
-                'gross_profit_percent': 0,
-                'eop_cash': 0,
-                'eop_runway': 0
-            })
-
-    return render_template('dashboard_current.html', current_data=current_data)
-
-
-# ==================== DASHBOARD 2: REVENUE & ARR HISTORY ====================
-
-@app.route('/dashboard/revenue-arr-history')
-def dashboard_revenue_arr():
-    """Dashboard showing historical revenue and ARR for all companies"""
-    companies = Company.query.order_by(Company.name).all()
-
-    company_histories = []
-    for company in companies:
-        historical_data = get_all_historical_data(company.id)
-
-        if historical_data:
-            history = []
-            for i, data in enumerate(historical_data):
-                prev_data = historical_data[i-1] if i > 0 else None
-
-                history.append({
-                    'period': f'Q{data.quarter} {data.year}',
-                    'year': data.year,
-                    'quarter': data.quarter,
-                    'revenue': data.revenue,
-                    'arr': data.arr,
-                    'revenue_growth': calculate_qoq_growth(data.revenue, prev_data.revenue if prev_data else 0),
-                    'arr_growth': calculate_qoq_growth(data.arr, prev_data.arr if prev_data else 0)
+            if latest:
+                qoq_growth = calculate_qoq_growth(company.id, latest.year, latest.quarter)
+                company_metrics.append({
+                    'id': company.id,
+                    'name': company.name,
+                    'industry': company.industry,
+                    'period': latest.period,
+                    'arr': latest.arr,
+                    'revenue': latest.revenue,
+                    'headcount': latest.headcount,
+                    'qoq_growth': qoq_growth
                 })
 
-            company_histories.append({
-                'company_id': company.id,
-                'company_name': company.name,
-                'history': history
-            })
+        fund_data.append({
+            'fund': fund,
+            'aggregates': aggregates,
+            'companies': company_metrics
+        })
 
-    return render_template('dashboard_revenue_arr.html', company_histories=company_histories)
+    return render_template('dashboard_overview.html', fund_data=fund_data)
 
 
-# ==================== DASHBOARD 3: FULL METRICS HISTORY ====================
+# ==================== PAGE 2: REVENUE & ARR HISTORY ====================
 
-@app.route('/dashboard/full-metrics-history')
-def dashboard_full_metrics():
-    """Dashboard showing complete historical metrics for all companies"""
-    companies = Company.query.order_by(Company.name).all()
+@app.route('/dashboard/revenue-arr-by-fund')
+def revenue_arr_by_fund():
+    """Revenue & ARR History by Fund"""
+    fund_id = request.args.get('fund_id', type=int)
 
-    company_metrics = []
+    funds = Fund.query.all()
+
+    if fund_id:
+        selected_fund = Fund.query.get(fund_id)
+        companies = Company.query.filter_by(fund_id=fund_id).all()
+    else:
+        selected_fund = None
+        companies = Company.query.all()
+
+    company_data = []
     for company in companies:
-        historical_data = get_all_historical_data(company.id)
+        history = QuarterlyData.query.filter_by(company_id=company.id)\
+            .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).all()
 
-        if historical_data:
-            metrics = [data.to_dict() for data in historical_data]
-            company_metrics.append({
-                'company_id': company.id,
-                'company_name': company.name,
-                'metrics': metrics
+        history_list = []
+        for data in history:
+            qoq_growth = calculate_qoq_growth(company.id, data.year, data.quarter)
+            history_list.append({
+                'period': data.period,
+                'year': data.year,
+                'quarter': data.quarter,
+                'revenue': data.revenue,
+                'arr': data.arr,
+                'arr_projection': data.arr_projection,
+                'qoq_growth': qoq_growth
             })
 
-    return render_template('dashboard_full_metrics.html', company_metrics=company_metrics)
+        if history_list:
+            company_data.append({
+                'company_id': company.id,
+                'company_name': company.name,
+                'fund_name': company.fund.name,
+                'history': history_list
+            })
+
+    return render_template('revenue_arr_by_fund.html',
+                         funds=funds,
+                         selected_fund=selected_fund,
+                         company_data=company_data)
 
 
-# ==================== DASHBOARD 4: GOOGLE FORM INTEGRATION ====================
+# ==================== PAGE 3: COMPANY METRICS DETAIL ====================
 
-@app.route('/dashboard/google-form')
-def dashboard_google_form():
-    """Dashboard for Google Form integration"""
-    companies = Company.query.order_by(Company.name).all()
+@app.route('/dashboard/company-metrics')
+def company_metrics():
+    """Detailed Company Metrics"""
+    fund_id = request.args.get('fund_id', type=int)
+    company_id = request.args.get('company_id', type=int)
 
-    # Generate form URL for instructions
-    base_url = request.url_root
-    webhook_url = f"{base_url}api/google-form-submit"
+    funds = Fund.query.all()
+    companies = []
+    metrics = []
+    selected_fund = None
+    selected_company = None
 
-    return render_template('dashboard_google_form.html',
+    if fund_id:
+        selected_fund = Fund.query.get(fund_id)
+        companies = Company.query.filter_by(fund_id=fund_id).all()
+
+    if company_id:
+        selected_company = Company.query.get(company_id)
+        metrics = QuarterlyData.query.filter_by(company_id=company_id)\
+            .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).all()
+
+    return render_template('company_metrics.html',
+                         funds=funds,
                          companies=companies,
-                         webhook_url=webhook_url)
+                         metrics=metrics,
+                         selected_fund=selected_fund,
+                         selected_company=selected_company)
 
 
-@app.route('/api/google-form-submit', methods=['POST'])
-def google_form_submit():
-    """
-    API endpoint to receive data from Google Forms
-    This endpoint accepts form submissions and saves them to the database
-    """
+# ==================== PAGE 4: GOOGLE FORM MANAGEMENT ====================
+
+@app.route('/forms/manage')
+def forms_manage():
+    """Google Form Management"""
+    # Get webhook URL
+    webhook_url = request.url_root + 'api/form-submit'
+
+    # Get all companies for form generation
+    funds = Fund.query.all()
+    companies = Company.query.all()
+
+    return render_template('forms_manage.html',
+                         webhook_url=webhook_url,
+                         funds=funds,
+                         companies=companies)
+
+
+@app.route('/api/form-submit', methods=['POST'])
+def api_form_submit():
+    """Handle Google Form submissions"""
     try:
         data = request.get_json() if request.is_json else request.form.to_dict()
 
-        # Extract data (adjust field names based on your Google Form)
-        company_name = data.get('company_name') or data.get('Company Name')
-        year = int(data.get('year') or data.get('Year'))
-        quarter = int(data.get('quarter') or data.get('Quarter'))
-        revenue = float(data.get('revenue') or data.get('Revenue') or 0)
-        arr = float(data.get('arr') or data.get('ARR') or 0)
+        # Extract data from form
+        company_name = data.get('company_name')
+        year = int(data.get('year'))
+        quarter = int(data.get('quarter'))
 
-        # Optional fields
-        headcount = int(data.get('headcount') or data.get('Headcount') or 0)
-        gross_profit = float(data.get('gross_profit') or data.get('Gross Profit') or 0)
-        gross_profit_percent = float(data.get('gross_profit_percent') or data.get('Gross Profit %') or 0)
-        sales_marketing = float(data.get('sales_marketing') or data.get('Sales & Marketing') or 0)
-        research_development = float(data.get('research_development') or data.get('R&D') or 0)
-        general_administrative = float(data.get('general_administrative') or data.get('G&A') or 0)
-        eop_cash = float(data.get('eop_cash') or data.get('EOP Cash') or 0)
-        eop_runway = float(data.get('eop_runway') or data.get('EOP Runway') or 0)
-
-        # Find or create company
+        # Find company
         company = Company.query.filter_by(name=company_name).first()
         if not company:
-            company = Company(name=company_name)
-            db.session.add(company)
-            db.session.flush()
+            return jsonify({'error': 'Company not found'}), 404
 
-        # Check if quarterly data already exists
+        # Check if data already exists for this period
         existing = QuarterlyData.query.filter_by(
             company_id=company.id,
             year=year,
@@ -290,154 +343,151 @@ def google_form_submit():
 
         if existing:
             # Update existing
-            existing.revenue = revenue
-            existing.arr = arr
-            existing.headcount = headcount
-            existing.gross_profit = gross_profit
-            existing.gross_profit_percent = gross_profit_percent
-            existing.sales_marketing = sales_marketing
-            existing.research_development = research_development
-            existing.general_administrative = general_administrative
-            existing.eop_cash = eop_cash
-            existing.eop_runway = eop_runway
-            existing.updated_at = datetime.utcnow()
+            quarterly_data = existing
         else:
             # Create new
             quarterly_data = QuarterlyData(
                 company_id=company.id,
                 year=year,
-                quarter=quarter,
-                revenue=revenue,
-                arr=arr,
-                headcount=headcount,
-                gross_profit=gross_profit,
-                gross_profit_percent=gross_profit_percent,
-                sales_marketing=sales_marketing,
-                research_development=research_development,
-                general_administrative=general_administrative,
-                eop_cash=eop_cash,
-                eop_runway=eop_runway
+                quarter=quarter
             )
-            db.session.add(quarterly_data)
 
+        # Update all fields
+        quarterly_data.revenue = float(data.get('revenue', 0))
+        quarterly_data.arr = float(data.get('arr', 0))
+        quarterly_data.arr_projection = float(data.get('arr_projection', 0))
+        quarterly_data.headcount = int(data.get('headcount', 0))
+        quarterly_data.gross_profit = float(data.get('gross_profit', 0))
+        quarterly_data.gross_profit_percent = float(data.get('gross_profit_percent', 0))
+        quarterly_data.sales_marketing = float(data.get('sales_marketing', 0))
+        quarterly_data.research_development = float(data.get('research_development', 0))
+        quarterly_data.general_administrative = float(data.get('general_administrative', 0))
+        quarterly_data.eop_cash = float(data.get('eop_cash', 0))
+        quarterly_data.eop_runway = float(data.get('eop_runway', 0))
+
+        db.session.add(quarterly_data)
         db.session.commit()
 
-        return jsonify({
-            'status': 'success',
-            'message': f'Data saved for {company_name} Q{quarter} {year}'
-        }), 200
+        return jsonify({'success': True, 'message': 'Data submitted successfully'}), 200
 
     except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
+        return jsonify({'error': str(e)}), 500
 
 
-# ==================== MANUAL ENTRY SECTION ====================
+# ==================== PAGE 5: PORTFOLIO COMPANY DATABASE ====================
 
-@app.route('/manual/add-company', methods=['GET', 'POST'])
-def manual_add_company():
-    """Manually add a new portfolio company"""
+@app.route('/admin/companies')
+def admin_companies():
+    """Portfolio Company Master Database"""
+    funds = Fund.query.all()
+
+    fund_companies = []
+    for fund in funds:
+        companies = Company.query.filter_by(fund_id=fund.id).all()
+
+        company_list = []
+        for company in companies:
+            latest = QuarterlyData.query.filter_by(company_id=company.id)\
+                .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).first()
+
+            company_list.append({
+                'id': company.id,
+                'name': company.name,
+                'industry': company.industry,
+                'latest_period': latest.period if latest else 'No data',
+                'data_count': QuarterlyData.query.filter_by(company_id=company.id).count()
+            })
+
+        fund_companies.append({
+            'fund': fund,
+            'companies': company_list
+        })
+
+    return render_template('admin_companies.html', fund_companies=fund_companies)
+
+
+@app.route('/admin/companies/add', methods=['GET', 'POST'])
+def admin_add_company():
+    """Add new company"""
     if request.method == 'POST':
-        company_name = request.form.get('company_name', '').strip()
-        industry = request.form.get('industry', '').strip()
+        name = request.form.get('name')
+        industry = request.form.get('industry')
+        fund_id = int(request.form.get('fund_id'))
 
-        if not company_name:
-            return render_template('manual_add_company.html', error='Company name is required')
+        if not name:
+            flash('Company name is required', 'error')
+            return redirect(url_for('admin_add_company'))
 
-        existing = Company.query.filter_by(name=company_name).first()
+        existing = Company.query.filter_by(name=name).first()
         if existing:
-            return render_template('manual_add_company.html', error='Company already exists')
+            flash('Company already exists', 'error')
+            return redirect(url_for('admin_add_company'))
 
-        company = Company(name=company_name, industry=industry)
+        company = Company(name=name, industry=industry, fund_id=fund_id)
         db.session.add(company)
         db.session.commit()
 
-        return redirect(url_for('manual_enter_data', company_id=company.id))
+        flash(f'Company "{name}" added successfully', 'success')
+        return redirect(url_for('admin_companies'))
 
-    return render_template('manual_add_company.html')
+    funds = Fund.query.all()
+    return render_template('admin_add_company.html', funds=funds)
 
 
-@app.route('/manual/enter-data/<int:company_id>', methods=['GET', 'POST'])
-def manual_enter_data(company_id):
-    """Manually enter quarterly data for a company"""
+@app.route('/admin/companies/<int:company_id>/edit', methods=['GET', 'POST'])
+def admin_edit_company(company_id):
+    """Edit company and metrics"""
     company = Company.query.get_or_404(company_id)
 
     if request.method == 'POST':
-        try:
-            year = int(request.form.get('year'))
-            quarter = int(request.form.get('quarter'))
+        # Update company info
+        company.name = request.form.get('name')
+        company.industry = request.form.get('industry')
+        company.fund_id = int(request.form.get('fund_id'))
 
-            # Check if data exists
-            existing = QuarterlyData.query.filter_by(
-                company_id=company_id,
+        # Update or create quarterly data
+        year = int(request.form.get('year'))
+        quarter = int(request.form.get('quarter'))
+
+        quarterly_data = QuarterlyData.query.filter_by(
+            company_id=company.id,
+            year=year,
+            quarter=quarter
+        ).first()
+
+        if not quarterly_data:
+            quarterly_data = QuarterlyData(
+                company_id=company.id,
                 year=year,
                 quarter=quarter
-            ).first()
+            )
 
-            data_dict = {
-                'revenue': float(request.form.get('revenue', 0)),
-                'arr': float(request.form.get('arr', 0)),
-                'headcount': int(request.form.get('headcount', 0)),
-                'gross_profit': float(request.form.get('gross_profit', 0)),
-                'gross_profit_percent': float(request.form.get('gross_profit_percent', 0)),
-                'sales_marketing': float(request.form.get('sales_marketing', 0)),
-                'research_development': float(request.form.get('research_development', 0)),
-                'general_administrative': float(request.form.get('general_administrative', 0)),
-                'eop_cash': float(request.form.get('eop_cash', 0)),
-                'eop_runway': float(request.form.get('eop_runway', 0))
-            }
+        quarterly_data.revenue = float(request.form.get('revenue', 0))
+        quarterly_data.arr = float(request.form.get('arr', 0))
+        quarterly_data.arr_projection = float(request.form.get('arr_projection', 0))
+        quarterly_data.headcount = int(request.form.get('headcount', 0))
+        quarterly_data.gross_profit = float(request.form.get('gross_profit', 0))
+        quarterly_data.gross_profit_percent = float(request.form.get('gross_profit_percent', 0))
+        quarterly_data.sales_marketing = float(request.form.get('sales_marketing', 0))
+        quarterly_data.research_development = float(request.form.get('research_development', 0))
+        quarterly_data.general_administrative = float(request.form.get('general_administrative', 0))
+        quarterly_data.eop_cash = float(request.form.get('eop_cash', 0))
+        quarterly_data.eop_runway = float(request.form.get('eop_runway', 0))
 
-            if existing:
-                for key, value in data_dict.items():
-                    setattr(existing, key, value)
-                existing.updated_at = datetime.utcnow()
-                message = f'Data updated for Q{quarter} {year}'
-            else:
-                quarterly_data = QuarterlyData(
-                    company_id=company_id,
-                    year=year,
-                    quarter=quarter,
-                    **data_dict
-                )
-                db.session.add(quarterly_data)
-                message = f'Data added for Q{quarter} {year}'
+        db.session.add(quarterly_data)
+        db.session.commit()
 
-            db.session.commit()
+        flash('Company updated successfully', 'success')
+        return redirect(url_for('admin_companies'))
 
-            return render_template('manual_enter_data.html',
-                                 company=company,
-                                 success=message)
+    funds = Fund.query.all()
+    metrics = QuarterlyData.query.filter_by(company_id=company.id)\
+        .order_by(desc(QuarterlyData.year), desc(QuarterlyData.quarter)).all()
 
-        except ValueError as e:
-            return render_template('manual_enter_data.html',
-                                 company=company,
-                                 error=f'Invalid input: {str(e)}')
-
-    return render_template('manual_enter_data.html', company=company)
-
-
-@app.route('/manual/manage-companies')
-def manual_manage_companies():
-    """View and manage all companies"""
-    companies = Company.query.order_by(Company.name).all()
-
-    companies_data = []
-    for company in companies:
-        latest = get_latest_data_for_company(company.id)
-        data_count = QuarterlyData.query.filter_by(company_id=company.id).count()
-
-        companies_data.append({
-            'id': company.id,
-            'name': company.name,
-            'industry': company.industry,
-            'latest_period': f'Q{latest.quarter} {latest.year}' if latest else 'No data',
-            'quarters_count': data_count
-        })
-
-    return render_template('manual_manage_companies.html', companies=companies_data)
+    return render_template('admin_edit_company.html',
+                         company=company,
+                         funds=funds,
+                         metrics=metrics)
 
 
 # ==================== API ENDPOINTS FOR CHARTS ====================
@@ -445,7 +495,8 @@ def manual_manage_companies():
 @app.route('/api/company/<int:company_id>/revenue-arr-chart')
 def api_revenue_arr_chart(company_id):
     """Get revenue and ARR data for charts"""
-    historical_data = get_all_historical_data(company_id)
+    historical_data = QuarterlyData.query.filter_by(company_id=company_id)\
+        .order_by(QuarterlyData.year.asc(), QuarterlyData.quarter.asc()).all()
 
     labels = [f'Q{d.quarter} {d.year}' for d in historical_data]
     revenue_data = [d.revenue for d in historical_data]
@@ -458,101 +509,62 @@ def api_revenue_arr_chart(company_id):
     })
 
 
-@app.route('/api/company/<int:company_id>/all-metrics-chart')
-def api_all_metrics_chart(company_id):
-    """Get all metrics data for comprehensive charts"""
-    historical_data = get_all_historical_data(company_id)
-
-    return jsonify({
-        'labels': [f'Q{d.quarter} {d.year}' for d in historical_data],
-        'revenue': [d.revenue for d in historical_data],
-        'arr': [d.arr for d in historical_data],
-        'headcount': [d.headcount for d in historical_data],
-        'gross_profit': [d.gross_profit for d in historical_data],
-        'gross_profit_percent': [d.gross_profit_percent for d in historical_data],
-        'sales_marketing': [d.sales_marketing for d in historical_data],
-        'research_development': [d.research_development for d in historical_data],
-        'general_administrative': [d.general_administrative for d in historical_data],
-        'eop_cash': [d.eop_cash for d in historical_data],
-        'eop_runway': [d.eop_runway for d in historical_data]
-    })
-
-
-# ==================== INITIALIZATION ====================
+# ==================== DATABASE INITIALIZATION ====================
 
 def init_db():
     """Initialize database with sample data"""
-    with app.app_context():
-        db.create_all()
+    db.create_all()
 
-        if Company.query.count() == 0:
-            print("\n" + "="*60)
-            print("Creating sample data...")
-            print("="*60)
+    # Check if already initialized
+    if Fund.query.first():
+        return
 
-            # Create sample companies
-            companies_data = [
-                {'name': 'TechFlow AI', 'industry': 'Artificial Intelligence'},
-                {'name': 'CloudScale Systems', 'industry': 'Cloud Infrastructure'},
-                {'name': 'DataVision Analytics', 'industry': 'Data Analytics'}
-            ]
+    print("\n" + "="*60)
+    print("Initializing GreatPoint Ventures Portfolio Database")
+    print("="*60)
 
-            for comp_data in companies_data:
-                company = Company(**comp_data)
-                db.session.add(company)
-                db.session.flush()
+    # Create Funds
+    fund1 = Fund(name='Fund 1', vintage_year=2020, fund_size=100)
+    fund2 = Fund(name='Fund 2', vintage_year=2022, fund_size=150)
+    fund3 = Fund(name='Fund 3', vintage_year=2024, fund_size=200)
 
-                # Add 6 quarters of historical data
-                base_revenue = 500000
-                base_arr = 2000000
+    db.session.add_all([fund1, fund2, fund3])
+    db.session.commit()
 
-                for year in [2023, 2024]:
-                    for quarter in range(1, 5 if year == 2023 else 3):  # 2023: Q1-Q4, 2024: Q1-Q2
-                        quarter_index = (year - 2023) * 4 + quarter
+    # Create 5 Sample Companies
+    companies = [
+        Company(name='CloudSync Solutions', industry='SaaS - Enterprise', fund_id=fund1.id),
+        Company(name='DataFlow Analytics', industry='SaaS - Data', fund_id=fund1.id),
+        Company(name='SecureAuth Pro', industry='Security', fund_id=fund2.id),
+        Company(name='MarketPulse AI', industry='MarTech', fund_id=fund2.id),
+        Company(name='FinStream Technologies', industry='FinTech', fund_id=fund3.id),
+    ]
 
-                        growth_factor = 1 + (quarter_index * 0.15)
+    db.session.add_all(companies)
+    db.session.commit()
 
-                        quarterly_data = QuarterlyData(
-                            company_id=company.id,
-                            year=year,
-                            quarter=quarter,
-                            revenue=base_revenue * growth_factor * company.id,
-                            arr=base_arr * growth_factor * company.id,
-                            headcount=20 + (quarter_index * 5) * company.id,
-                            gross_profit=base_revenue * growth_factor * company.id * 0.7,
-                            gross_profit_percent=70 + (quarter_index * 2),
-                            sales_marketing=100000 * growth_factor * company.id,
-                            research_development=150000 * growth_factor * company.id,
-                            general_administrative=80000 * growth_factor * company.id,
-                            eop_cash=3000000 * growth_factor * company.id,
-                            eop_runway=18 - (quarter_index * 0.5)
-                        )
-                        db.session.add(quarterly_data)
+    print("\n✓ Sample data created successfully!")
+    print(f"  - 3 Funds (Fund 1, Fund 2, Fund 3)")
+    print(f"  - 5 Portfolio Companies")
+    print("="*60 + "\n")
 
-            db.session.commit()
-            print("✓ Sample data created!")
-            print("  - 3 companies")
-            print("  - 6 quarters of historical data per company")
-            print("="*60 + "\n")
 
+# ==================== RUN APPLICATION ====================
 
 if __name__ == '__main__':
-    init_db()
+    with app.app_context():
+        init_db()
 
     print("="*60)
-    print("VC PORTFOLIO MANAGEMENT SYSTEM")
+    print("GREATPOINT VENTURES PORTFOLIO MANAGEMENT SYSTEM")
     print("="*60)
     print("\n🌐 Access the application at: http://localhost:5002\n")
-    print("📊 DASHBOARDS:")
-    print("  1. Current Metrics:      /dashboard/current")
-    print("  2. Revenue & ARR History: /dashboard/revenue-arr-history")
-    print("  3. Full Metrics History:  /dashboard/full-metrics-history")
-    print("  4. Google Form Setup:     /dashboard/google-form")
-    print("\n✏️  MANUAL ENTRY:")
-    print("  - Add Company:           /manual/add-company")
-    print("  - Manage Companies:      /manual/manage-companies")
-    print("\n🔌 API:")
-    print("  - Google Form Webhook:   /api/google-form-submit")
+    print("📊 PAGES:")
+    print("  1. Main Dashboard:         /dashboard/overview")
+    print("  2. Revenue & ARR History:  /dashboard/revenue-arr-by-fund")
+    print("  3. Company Metrics:        /dashboard/company-metrics")
+    print("  4. Form Management:        /forms/manage")
+    print("  5. Company Database:       /admin/companies")
     print("\n" + "="*60)
     print("Press CTRL+C to stop\n")
 

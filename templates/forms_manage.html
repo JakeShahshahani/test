@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Form Management - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3.5rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(10, 37, 64, 0.03) 0%, rgba(74, 123, 167, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #0a2540 0%, #4a7ba7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Google Form Integration</h1>
+    <p class="hero-subtitle">Automated data collection from portfolio companies</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Submission Webhook</h2>
+        <p>Use this URL as the webhook endpoint for your Google Form submissions</p>
+    </div>
+
+    <div class="code-block">{{ webhook_url }}</div>
+
+    <button class="btn btn-gold btn-small" onclick="copyWebhook()" style="margin-top: 1rem;">Copy Webhook URL</button>
+</div>
+
+<div class="info-box">
+    <h4>Required Form Fields</h4>
+    <p>Your Google Form must include the following fields (exact names):</p>
+    <ul>
+        <li><code>company_name</code> - Company Name (must match exactly)</li>
+        <li><code>year</code> - Year (e.g., 2024)</li>
+        <li><code>quarter</code> - Quarter (1, 2, 3, or 4)</li>
+        <li><code>revenue</code> - Quarterly Revenue</li>
+        <li><code>arr</code> - Annual Recurring Revenue</li>
+        <li><code>arr_projection</code> - End-of-Year ARR Projection</li>
+        <li><code>headcount</code> - Total Headcount</li>
+        <li><code>gross_profit</code> - Gross Profit</li>
+        <li><code>gross_profit_percent</code> - Gross Profit %</li>
+        <li><code>sales_marketing</code> - Sales & Marketing Expenses</li>
+        <li><code>research_development</code> - R&D Expenses</li>
+        <li><code>general_administrative</code> - G&A Expenses</li>
+        <li><code>eop_cash</code> - End of Period Cash</li>
+        <li><code>eop_runway</code> - Runway in Months</li>
+    </ul>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Portfolio Companies</h2>
+        <p>Companies available for form submissions</p>
+    </div>
+
+    {% for fund in funds %}
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--gpv-navy);">{{ fund.name }}</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Industry</th>
+                    <th>Latest Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in companies if company.fund_id == fund.id %}
+                <tr>
+                    <td><strong>{{ company.name }}</strong></td>
+                    <td>{{ company.industry }}</td>
+                    <td>—</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function copyWebhook() {
+    navigator.clipboard.writeText('{{ webhook_url }}').then(() => {
+        alert('Webhook URL copied to clipboard!');
+    });
+}
+</script>
+
+{% endblock %}
