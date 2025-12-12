@@ -556,7 +556,7 @@ if __name__ == '__main__':
         init_db()
 
     print("="*60)
-    print("GREATPOINT VENTURES PORTFOLIO MANAGEMENT SYSTEM")
+    print("GREATPOINT VENTURES PORTFOLIO MANAGEMENT SYSTEM - VERSION 2.0")
     print("="*60)
     print("\n🌐 Access the application at: http://localhost:5003\n")
     print("📊 PAGES:")
