@@ -1,0 +1,28 @@
+# Systemd Service File for GreatPoint Ventures Portfolio Management
+# Place this in /etc/systemd/system/greatpoint-portfolio.service
+
+[Unit]
+Description=GreatPoint Ventures Portfolio Management
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/greatpoint-portfolio
+Environment="PATH=/var/www/greatpoint-portfolio/venv/bin"
+Environment="FLASK_ENV=production"
+EnvironmentFile=/var/www/greatpoint-portfolio/.env
+ExecStart=/var/www/greatpoint-portfolio/venv/bin/gunicorn \
+    --config gunicorn_config.py \
+    --bind 0.0.0.0:8000 \
+    app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

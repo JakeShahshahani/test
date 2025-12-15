@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Add Company - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(10, 37, 64, 0.03) 0%, rgba(201, 169, 97, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, #0a2540 0%, #c9a961 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--gpv-gray-600);
+        max-width: 600px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Add New Portfolio Company</h1>
+    <p class="hero-subtitle">Expand your portfolio with a new investment</p>
+</div>
+
+{% if success %}
+<div class="alert alert-success">✓ {{ success }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">✗ {{ error }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Company Information</h2>
+        <p>Enter the basic details for the new portfolio company</p>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="company_name">Company Name *</label>
+            <input type="text" name="company_name" id="company_name" placeholder="e.g., TechFlow AI" required autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="industry">Industry</label>
+            <input type="text" name="industry" id="industry" placeholder="e.g., Artificial Intelligence, SaaS, FinTech">
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2.5rem;">
+            <button type="submit" class="btn btn-gold">Add Company</button>
+            <a href="/manual/manage-companies" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="info-box">
+    <h4>What Happens Next?</h4>
+    <ol>
+        <li>Company will be added to the portfolio database</li>
+        <li>You'll be redirected to enter the first quarter's financial data</li>
+        <li>Company will appear across all dashboards</li>
+        <li>Historical data can be added for any past quarters</li>
+        <li>Company will be available in the Google Form dropdown</li>
+    </ol>
+</div>
+{% endblock %}

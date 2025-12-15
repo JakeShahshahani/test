@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Current Metrics - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(10, 37, 64, 0.03) 0%, rgba(201, 169, 97, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #0a2540 0%, #1a4d7a 50%, #c9a961 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: var(--gpv-gray-600);
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Portfolio Performance</h1>
+    <p class="hero-subtitle">Real-time quarterly metrics and growth tracking across your investment portfolio</p>
+</div>
+
+<div class="stats-grid">
+    {% set total_companies = current_data|length %}
+    {% set total_revenue = current_data|sum(attribute='revenue') %}
+    {% set total_arr = current_data|sum(attribute='arr') %}
+
+    <div class="stat-card">
+        <h3>Portfolio Companies</h3>
+        <div class="value">{{ total_companies }}</div>
+        <div class="subtext">Active investments</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Total Quarterly Revenue</h3>
+        <div class="value">${{ "{:,.0f}".format(total_revenue / 1000000) }}M</div>
+        <div class="subtext">Aggregate revenue</div>
+    </div>
+
+    <div class="stat-card">
+        <h3>Total ARR</h3>
+        <div class="value">${{ "{:,.0f}".format(total_arr / 1000000) }}M</div>
+        <div class="subtext">Annual recurring revenue</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Quarterly Performance Overview</h2>
+        <p>Most recent quarterly metrics with quarter-over-quarter growth indicators</p>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Industry</th>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">QoQ Growth</th>
+                    <th class="number">ARR</th>
+                    <th class="number">QoQ Growth</th>
+                    <th class="number">Headcount</th>
+                    <th class="number">GP Margin</th>
+                    <th class="number">Cash</th>
+                    <th class="number">Runway</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in current_data %}
+                <tr>
+                    <td><strong>{{ company.company_name }}</strong></td>
+                    <td>{{ company.industry or '—' }}</td>
+                    <td><span style="font-weight: 500;">{{ company.period }}</span></td>
+                    <td class="number">${{ "{:,.0f}".format(company.revenue) }}</td>
+                    <td class="number">
+                        {% if company.revenue_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(company.revenue_growth) }}%</span>
+                        {% elif company.revenue_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(company.revenue_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="number">${{ "{:,.0f}".format(company.arr) }}</td>
+                    <td class="number">
+                        {% if company.arr_growth > 0 %}
+                            <span class="badge badge-up">↑ {{ "{:.1f}".format(company.arr_growth) }}%</span>
+                        {% elif company.arr_growth < 0 %}
+                            <span class="badge badge-down">↓ {{ "{:.1f}".format(company.arr_growth|abs) }}%</span>
+                        {% else %}
+                            <span class="badge badge-neutral">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="number">{{ company.headcount }}</td>
+                    <td class="number">{{ "{:.1f}".format(company.gross_profit_percent) }}%</td>
+                    <td class="number">${{ "{:,.0f}".format(company.eop_cash / 1000) }}K</td>
+                    <td class="number">{{ "{:.0f}".format(company.eop_runway) }} mo</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="display: flex; gap: 1rem; margin-top: 2rem;">
+    <a href="/manual/add-company" class="btn btn-gold">Add New Company</a>
+    <a href="/manual/manage-companies" class="btn btn-outline">Manage Companies</a>
+    <a href="/dashboard/revenue-arr-history" class="btn btn-outline">View Historical Data</a>
+</div>
+{% endblock %}

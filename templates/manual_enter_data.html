@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Data - {{ company.name }} - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(201, 169, 97, 0.05) 0%, rgba(10, 37, 64, 0.03) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, #c9a961 0%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--gpv-gray-600);
+        max-width: 600px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">{{ company.name }}</h1>
+    <p class="hero-subtitle">Quarterly financial data entry and updates</p>
+</div>
+
+{% if success %}
+<div class="alert alert-success">✓ {{ success }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">✗ {{ error }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Quarterly Data Entry</h2>
+        <p>Complete financial metrics for the specified quarter</p>
+    </div>
+
+    <form method="POST">
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label for="year">Year *</label>
+                <input type="number" name="year" id="year" min="2020" max="2030" value="2024" required>
+            </div>
+
+            <div class="form-group">
+                <label for="quarter">Quarter *</label>
+                <select name="quarter" id="quarter" required>
+                    <option value="">Select quarter...</option>
+                    <option value="1">Q1 (January - March)</option>
+                    <option value="2">Q2 (April - June)</option>
+                    <option value="3">Q3 (July - September)</option>
+                    <option value="4">Q4 (October - December)</option>
+                </select>
+            </div>
+        </div>
+
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Core Financial Metrics</h3>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label for="revenue">Revenue ($)</label>
+                <input type="number" name="revenue" id="revenue" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="arr">Annual Recurring Revenue ($)</label>
+                <input type="number" name="arr" id="arr" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="headcount">Headcount</label>
+                <input type="number" name="headcount" id="headcount" value="0" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label for="gross_profit">Gross Profit ($)</label>
+                <input type="number" name="gross_profit" id="gross_profit" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="gross_profit_percent">Gross Profit Margin (%)</label>
+                <input type="number" name="gross_profit_percent" id="gross_profit_percent" step="0.1" min="0" max="100" value="0" placeholder="0.0">
+            </div>
+        </div>
+
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Operating Expenses</h3>
+        <div class="form-grid form-grid-3">
+            <div class="form-group">
+                <label for="sales_marketing">Sales & Marketing ($)</label>
+                <input type="number" name="sales_marketing" id="sales_marketing" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="research_development">Research & Development ($)</label>
+                <input type="number" name="research_development" id="research_development" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="general_administrative">General & Administrative ($)</label>
+                <input type="number" name="general_administrative" id="general_administrative" step="0.01" value="0" placeholder="0.00">
+            </div>
+        </div>
+
+        <h3 style="margin: 2.5rem 0 1.5rem; color: var(--gpv-navy); font-family: 'Playfair Display', serif; font-size: 1.35rem;">Cash Position</h3>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label for="eop_cash">End of Period Cash ($)</label>
+                <input type="number" name="eop_cash" id="eop_cash" step="0.01" value="0" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="eop_runway">Cash Runway (months)</label>
+                <input type="number" name="eop_runway" id="eop_runway" step="0.1" value="0" placeholder="0.0">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--gpv-gray-200);">
+            <button type="submit" class="btn btn-gold">Save Quarterly Data</button>
+            <a href="/manual/manage-companies" class="btn btn-outline">Back to Companies</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

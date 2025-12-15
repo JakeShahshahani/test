@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Company Database - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3.5rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(201, 169, 97, 0.05) 0%, rgba(26, 77, 122, 0.03) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #c9a961 0%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .fund-companies-section {
+        margin-bottom: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Portfolio Company Database</h1>
+    <p class="hero-subtitle">Master database with manual override capability</p>
+</div>
+
+<div style="margin-bottom: 2rem;">
+    <a href="/admin/companies/add" class="btn btn-gold">Add New Company</a>
+</div>
+
+{% for fund_item in fund_companies %}
+<div class="fund-companies-section">
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ fund_item.fund.name }}</h2>
+            <p>{{ fund_item.companies|length }} companies</p>
+        </div>
+
+        {% if fund_item.companies %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Industry</th>
+                        <th>Latest Period</th>
+                        <th>Data Points</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in fund_item.companies %}
+                    <tr>
+                        <td><strong>{{ company.name }}</strong></td>
+                        <td>{{ company.industry }}</td>
+                        <td>{{ company.latest_period }}</td>
+                        <td>{{ company.data_count }} quarters</td>
+                        <td style="text-align: right;">
+                            <a href="/admin/companies/{{ company.id }}/edit" class="btn btn-outline btn-small">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--gpv-gray-600); padding: 2rem;">No companies in this fund.</p>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

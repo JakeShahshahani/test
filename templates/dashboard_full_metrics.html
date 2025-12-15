@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Full Metrics History - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(74, 123, 167, 0.05) 0%, rgba(201, 169, 97, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #4a7ba7 0%, #c9a961 50%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: var(--gpv-gray-600);
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Complete Metrics History</h1>
+    <p class="hero-subtitle">Comprehensive financial tracking with detailed quarterly data and visualizations</p>
+</div>
+
+{% for company in company_metrics %}
+<div class="company-section">
+    <h3>{{ company.company_name }}</h3>
+
+    <div style="overflow-x: auto; margin-top: 1.5rem;">
+        <table style="font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">ARR</th>
+                    <th class="number">Headcount</th>
+                    <th class="number">Gross Profit</th>
+                    <th class="number">GP %</th>
+                    <th class="number">S&M</th>
+                    <th class="number">R&D</th>
+                    <th class="number">G&A</th>
+                    <th class="number">EOP Cash</th>
+                    <th class="number">Runway</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in company.metrics %}
+                <tr>
+                    <td><strong>{{ metric.period }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(metric.revenue) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.arr) }}</td>
+                    <td class="number">{{ metric.headcount }}</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.gross_profit) }}</td>
+                    <td class="number">{{ "{:.1f}".format(metric.gross_profit_percent) }}%</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.sales_marketing) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.research_development) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.general_administrative) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(metric.eop_cash) }}</td>
+                    <td class="number">{{ "{:.1f}".format(metric.eop_runway) }} mo</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn btn-outline btn-small" style="margin-top: 1.5rem;" onclick="showCharts({{ company.company_id }})">
+        View Visualizations
+    </button>
+
+    <div id="charts-{{ company.company_id }}" style="display: none;">
+        <div class="chart-container">
+            <div class="chart-title">Revenue & ARR Growth</div>
+            <canvas id="chart-revenue-{{ company.company_id }}" style="height: 100%;"></canvas>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title">Operating Expenses Breakdown</div>
+            <canvas id="chart-expenses-{{ company.company_id }}" style="height: 100%;"></canvas>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div style="margin-top: 2rem;">
+    <a href="/dashboard/current" class="btn btn-outline">Back to Current Metrics</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const companyMetrics = {{ company_metrics | tojson }};
+const chartsCreated = {};
+
+const gpvNavy = '#0a2540';
+const gpvGold = '#c9a961';
+const gpvBlue = '#1a4d7a';
+const gpvLightBlue = '#4a7ba7';
+const gpvSuccess = '#059669';
+
+function showCharts(companyId) {
+    const chartsDiv = document.getElementById(`charts-${companyId}`);
+
+    if (chartsDiv.style.display === 'none') {
+        chartsDiv.style.display = 'block';
+
+        if (!chartsCreated[companyId]) {
+            const company = companyMetrics.find(c => c.company_id === companyId);
+            const labels = company.metrics.map(m => m.period);
+
+            // Revenue & ARR Chart
+            new Chart(document.getElementById(`chart-revenue-${companyId}`), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: company.metrics.map(m => m.revenue),
+                            borderColor: gpvNavy,
+                            backgroundColor: 'rgba(10, 37, 64, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: gpvNavy,
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'ARR',
+                            data: company.metrics.map(m => m.arr),
+                            borderColor: gpvGold,
+                            backgroundColor: 'rgba(201, 169, 97, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: gpvGold,
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#3f3f46',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10, 37, 64, 0.95)',
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                color: '#52525b',
+                                callback: v => '$' + (v / 1000).toLocaleString() + 'K'
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 11, weight: '500' },
+                                color: '#52525b'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Expenses Chart
+            new Chart(document.getElementById(`chart-expenses-${companyId}`), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales & Marketing',
+                            data: company.metrics.map(m => m.sales_marketing),
+                            backgroundColor: gpvNavy
+                        },
+                        {
+                            label: 'R&D',
+                            data: company.metrics.map(m => m.research_development),
+                            backgroundColor: gpvGold
+                        },
+                        {
+                            label: 'G&A',
+                            data: company.metrics.map(m => m.general_administrative),
+                            backgroundColor: gpvLightBlue
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#3f3f46',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                color: '#52525b',
+                                callback: v => '$' + (v / 1000).toLocaleString() + 'K'
+                            }
+                        },
+                        x: {
+                            stacked: true,
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                color: '#52525b'
+                            }
+                        }
+                    }
+                }
+            });
+
+            chartsCreated[companyId] = true;
+        }
+    } else {
+        chartsDiv.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

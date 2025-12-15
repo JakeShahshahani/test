@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Companies - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0 3rem;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(201, 169, 97, 0.05) 0%, rgba(26, 77, 122, 0.03) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #c9a961 0%, #0a2540 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: var(--gpv-gray-600);
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 400;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Portfolio Management</h1>
+    <p class="hero-subtitle">Comprehensive oversight of all portfolio companies and quarterly metrics</p>
+</div>
+
+<div style="margin-bottom: 2rem;">
+    <a href="/manual/add-company" class="btn btn-gold">Add New Company</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Portfolio Companies</h2>
+        <p>All active investments with data summary</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Industry</th>
+                <th>Latest Period</th>
+                <th class="number">Quarters of Data</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in companies %}
+            <tr>
+                <td><strong>{{ company.name }}</strong></td>
+                <td>{{ company.industry or '—' }}</td>
+                <td><span style="font-weight: 500;">{{ company.latest_period }}</span></td>
+                <td class="number">{{ company.quarters_count }} quarters</td>
+                <td>
+                    <a href="/manual/enter-data/{{ company.id }}" class="btn btn-small">Enter Data</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 4rem; color: var(--gpv-gray-600);">
+                    <div style="font-size: 1.1rem; margin-bottom: 1rem;">No companies in portfolio</div>
+                    <a href="/manual/add-company" class="btn btn-gold">Add Your First Company</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="info-box">
+    <h4>Quick Actions</h4>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+        <a href="/dashboard/current" class="btn btn-outline">View Current Metrics</a>
+        <a href="/dashboard/revenue-arr-history" class="btn btn-outline">View Revenue History</a>
+        <a href="/dashboard/google-form" class="btn btn-outline">Google Form Setup</a>
+    </div>
+</div>
+{% endblock %}

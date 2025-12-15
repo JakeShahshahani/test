@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio Metrics Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Portfolio Metrics Dashboard</h2>
+
+    {% if portfolio_data %}
+    <div style="overflow-x: auto;">
+        <table id="metricsTable">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th class="number">ARR</th>
+                    <th class="number">Headcount</th>
+                    <th class="number">Gross Profit</th>
+                    <th class="number">Gross Profit %</th>
+                    <th class="number">Sales & Marketing</th>
+                    <th class="number">R&D</th>
+                    <th class="number">G&A</th>
+                    <th class="number">EOP Cash</th>
+                    <th class="number">EOP Runway (mo)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for company in portfolio_data %}
+                <tr>
+                    <td><strong>{{ company.name }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(company.arr) }}</td>
+                    <td class="number">{{ company.headcount }}</td>
+                    <td class="number">${{ "{:,.0f}".format(company.gross_profit) }}</td>
+                    <td class="number">{{ "{:.1f}".format(company.gross_profit_percent) }}%</td>
+                    <td class="number">${{ "{:,.0f}".format(company.sales_marketing) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(company.research_development) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(company.general_administrative) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(company.eop_cash) }}</td>
+                    <td class="number">{{ "{:.1f}".format(company.eop_runway) }}</td>
+                    <td>
+                        <a href="/admin/update-metrics/{{ company.id }}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <p><strong>Total Companies:</strong> {{ portfolio_data|length }}</p>
+        <p style="margin-top: 0.5rem; color: #7f8c8d; font-size: 0.9rem;">
+            Last updated: {% if portfolio_data[0].updated_at %}{{ portfolio_data[0].updated_at.strftime('%Y-%m-%d %H:%M') }}{% else %}N/A{% endif %}
+        </p>
+    </div>
+    {% else %}
+    <p style="text-align: center; padding: 3rem; color: #7f8c8d;">
+        No companies yet. <a href="/admin/add-company">Add your first company</a>
+    </p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Quick Actions</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="/admin/add-company" class="btn btn-success">Add New Company</a>
+        <a href="/dashboard/revenue-tracking" class="btn">View Revenue Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Simple table sorting functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('metricsTable');
+    if (!table) return;
+
+    const headers = table.querySelectorAll('th');
+    headers.forEach((header, index) => {
+        if (header.textContent.includes('Actions')) return;
+
+        header.style.cursor = 'pointer';
+        header.title = 'Click to sort';
+
+        header.addEventListener('click', function() {
+            sortTable(index);
+        });
+    });
+
+    function sortTable(columnIndex) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        rows.sort((a, b) => {
+            let aValue = a.cells[columnIndex].textContent.trim();
+            let bValue = b.cells[columnIndex].textContent.trim();
+
+            // Remove $ and , for number columns
+            aValue = aValue.replace(/[$,]/g, '');
+            bValue = bValue.replace(/[$,]/g, '');
+
+            // Try to parse as number
+            const aNum = parseFloat(aValue);
+            const bNum = parseFloat(bValue);
+
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return bNum - aNum; // Descending for numbers
+            } else {
+                return aValue.localeCompare(bValue); // Ascending for text
+            }
+        });
+
+        // Re-append rows
+        rows.forEach(row => tbody.appendChild(row));
+    }
+});
+</script>
+{% endblock %}

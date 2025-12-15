@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Company Metrics - GreatPoint Ventures{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3.5rem 0 2.5rem;
+        margin-bottom: 2.5rem;
+        background: linear-gradient(135deg, rgba(74, 123, 167, 0.05) 0%, rgba(201, 169, 97, 0.05) 100%);
+        border-bottom: 1px solid var(--gpv-gray-200);
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #4a7ba7 0%, #c9a961 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-grid select {
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+        border: 1px solid var(--gpv-gray-300);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Detailed Company Metrics</h1>
+    <p class="hero-subtitle">Complete financial tracking across all metrics and time periods</p>
+</div>
+
+<div class="card">
+    <form method="GET" action="/dashboard/company-metrics">
+        <div class="filter-grid">
+            <div class="form-group">
+                <label>Fund</label>
+                <select name="fund_id" onchange="this.form.submit()">
+                    <option value="">Select Fund</option>
+                    {% for fund in funds %}
+                    <option value="{{ fund.id }}" {% if selected_fund and fund.id == selected_fund.id %}selected{% endif %}>
+                        {{ fund.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Company</label>
+                <select name="company_id" onchange="this.form.submit()" {% if not companies %}disabled{% endif %}>
+                    <option value="">Select Company</option>
+                    {% for company in companies %}
+                    <option value="{{ company.id }}" {% if selected_company and company.id == selected_company.id %}selected{% endif %}>
+                        {{ company.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if selected_company and metrics %}
+<div class="card">
+    <div class="card-header">
+        <h2>{{ selected_company.name }}</h2>
+        <p>{{ selected_company.industry }} • {{ selected_company.fund.name }}</p>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th class="number">Revenue</th>
+                    <th class="number">ARR</th>
+                    <th class="number">ARR Proj.</th>
+                    <th class="number">Headcount</th>
+                    <th class="number">GP</th>
+                    <th class="number">GP %</th>
+                    <th class="number">S&M</th>
+                    <th class="number">R&D</th>
+                    <th class="number">G&A</th>
+                    <th class="number">EOP Cash</th>
+                    <th class="number">Runway</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in metrics %}
+                <tr>
+                    <td><strong>{{ data.period }}</strong></td>
+                    <td class="number">${{ "{:,.0f}".format(data.revenue) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.arr) }}</td>
+                    <td class="number">{{ "$" + "{:,.0f}".format(data.arr_projection) if data.arr_projection > 0 else '—' }}</td>
+                    <td class="number">{{ data.headcount }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.gross_profit) }}</td>
+                    <td class="number">{{ "{:.0f}".format(data.gross_profit_percent) }}%</td>
+                    <td class="number">${{ "{:,.0f}".format(data.sales_marketing) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.research_development) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.general_administrative) }}</td>
+                    <td class="number">${{ "{:,.0f}".format(data.eop_cash) }}</td>
+                    <td class="number">{{ "{:.0f}".format(data.eop_runway) }} mo</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% elif selected_company %}
+<div class="card">
+    <p style="text-align: center; color: var(--gpv-gray-600);">No metrics data available for this company.</p>
+</div>
+{% endif %}
+
+{% endblock %}

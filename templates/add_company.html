@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Add Company{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Add New Portfolio Company</h2>
+
+    {% if success %}
+    <div class="alert alert-success">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="company_name">Company Name *</label>
+            <input type="text" name="company_name" id="company_name" placeholder="e.g., TechCorp Inc" required autofocus>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-success">Add Company</button>
+            <a href="/dashboard/portfolio-metrics" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>What Happens Next?</h2>
+    <ol style="margin-left: 2rem; line-height: 2;">
+        <li>Company is added to the database</li>
+        <li>Empty metrics record is created (all zeros)</li>
+        <li>You can update metrics from the Portfolio Metrics Dashboard</li>
+        <li>Company can submit quarterly revenue via the Submit Revenue form</li>
+    </ol>
+</div>
+{% endblock %}
